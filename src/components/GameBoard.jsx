@@ -1,413 +1,143 @@
-import React, { useState, useCallback } from 'react';
-import { BOARD_LAYOUTS } from '../utils/boardLayouts';
+import React, { useState } from 'react';
 import ControlButtons from './ControlButtons';
 import PieceSelector from './PieceSelector';
-import InfoPopup from './InfoPopup';
-import HelpPopup from './HelpPopup';
-import HintPopup from './HintPopup';
-import RulerPopup from './RulerPopup';
+import { BOARD_LAYOUTS } from '../utils/boardLayouts';
 
-const GameBoard = ({ gameType = '4x4', stage = 1, initialPieces = {}, hasPreviousPuzzle = false, hasNextPuzzle = false }) => {
-  const boardLayout = BOARD_LAYOUTS[gameType];
-  
-  // Define playable areas for each game type
-  const playableAreas = {
-    '4x4': {
-      startRow: 3,
-      endRow: 6,
-      startCol: 3,
-      endCol: 6
-    },
-    '9x9': {
-      startRow: 3,
-      endRow: 11,
-      startCol: 3,
-      endCol: 11
-    }
-  };
+// Import all tile images
+import emptyTile from '../assets/tiles/base/Game Board/MT_empty.png';
+import bottomMiddleSide from '../assets/tiles/base/Game Board/MT_bottom-middle-side.png';
+import rightMiddleSide from '../assets/tiles/base/Game Board/MT_right-middle-side.png';
+import leftMiddleSide from '../assets/tiles/base/Game Board/MT_left-middle-side.png';
+import upperMiddleSide from '../assets/tiles/base/Game Board/MT_upper-middle-side.png';
+// Outside corners (MT_corner-*.png)
+import cornerUpperLeft from '../assets/tiles/base/Game Board/MT_corner-upper-left.png';
+import cornerUpperRight from '../assets/tiles/base/Game Board/MT_corner-upper-right.png';
+import cornerLowerLeft from '../assets/tiles/base/Game Board/MT_corner-lower-left.png';
+import cornerLowerRight from '../assets/tiles/base/Game Board/MT_corner-lower-right.png';
+// Inside corners (MT_*-corner.png)
+import leftUpperCorner from '../assets/tiles/base/Game Board/MT_left-upper-corner.png';
+import leftLowerCorner from '../assets/tiles/base/Game Board/MT_left-lower-corner.png';
+import rightUpperCorner from '../assets/tiles/base/Game Board/MT_right-upper-corner.png';
+import rightLowerCorner from '../assets/tiles/base/Game Board/MT_right-lower-corner.png';
 
-  // State to track placed pieces
-  const [placedPieces, setPlacedPieces] = useState({});
-  // State to track move history for undo
-  const [moveHistory, setMoveHistory] = useState([]);
-  // State to track if ruler is active
-  const [rulerActive, setRulerActive] = useState(false);
-  // State to track if hint is active
-  const [hintActive, setHintActive] = useState(false);
-  // State to track selected piece
+const tileImages = {
+  'MT_empty.png': emptyTile,
+  'MT_bottom-middle-side.png': bottomMiddleSide,
+  'MT_right-middle-side.png': rightMiddleSide,
+  'MT_left-middle-side.png': leftMiddleSide,
+  'MT_upper-middle-side.png': upperMiddleSide,
+  // Outside corners (MT_corner-*.png)
+  'MT_corner-upper-left.png': cornerUpperLeft,
+  'MT_corner-upper-right.png': cornerUpperRight,
+  'MT_corner-lower-left.png': cornerLowerLeft,
+  'MT_corner-lower-right.png': cornerLowerRight,
+  // Inside corners (MT_*-corner.png)
+  'MT_left-upper-corner.png': leftUpperCorner,
+  'MT_left-lower-corner.png': leftLowerCorner,
+  'MT_right-upper-corner.png': rightUpperCorner,
+  'MT_right-lower-corner.png': rightLowerCorner
+};
+
+const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
   const [selectedPiece, setSelectedPiece] = useState(null);
-  // State to track if info popup is visible
-  const [showInfoPopup, setShowInfoPopup] = useState(false);
-  // State to track if help popup is visible
-  const [showHelpPopup, setShowHelpPopup] = useState(false);
-  // State to track if erase mode is active
-  const [eraseMode, setEraseMode] = useState(false);
-  // State to track if hint popup is visible
-  const [showHintPopup, setShowHintPopup] = useState(false);
-  // State to track if ruler popup is visible
-  const [showRulerPopup, setShowRulerPopup] = useState(false);
+  const [placedPieces, setPlacedPieces] = useState({});
+  const [canUndo, setCanUndo] = useState(false);
+  const [canErase, setCanErase] = useState(false);
+  const [canHint, setCanHint] = useState(false);
+  const [canRuler, setCanRuler] = useState(false);
+  const [canPrevious, setCanPrevious] = useState(false);
+  const [canNext, setCanNext] = useState(false);
 
-  const isPlayableCell = (rowIndex, colIndex) => {
-    const area = playableAreas[gameType];
-    return rowIndex >= area.startRow && 
-           rowIndex <= area.endRow && 
-           colIndex >= area.startCol && 
-           colIndex <= area.endCol;
-  };
+  const boardLayout = BOARD_LAYOUTS[gameType].layout;
+  const gridSize = BOARD_LAYOUTS[gameType].cols;
 
   const handleCellClick = (rowIndex, colIndex) => {
-    if (isPlayableCell(rowIndex, colIndex)) {
-      const cellKey = `${rowIndex}-${colIndex}`;
-      
-      // Don't allow placing pieces on cells with initial pieces
-      if (initialPieces[cellKey]) return;
+    if (!selectedPiece) return;
 
-      if (eraseMode) {
-        // If in erase mode and there's a piece, remove it
-        if (placedPieces[cellKey]) {
-          const removedPiece = placedPieces[cellKey];
-          setPlacedPieces(prev => {
-            const newPieces = { ...prev };
-            delete newPieces[cellKey];
-            return newPieces;
-          });
-          // Add to move history
-          setMoveHistory(prev => [...prev, { 
-            type: 'remove', 
-            cellKey,
-            piece: removedPiece.type 
-          }]);
-          // Exit erase mode after erasing a piece
-          setEraseMode(false);
-        }
-      } else {
-        // Normal piece placement logic
-        if (placedPieces[cellKey]) {
-          const removedPiece = placedPieces[cellKey];
-          setPlacedPieces(prev => {
-            const newPieces = { ...prev };
-            delete newPieces[cellKey];
-            return newPieces;
-          });
-          // Add to move history
-          setMoveHistory(prev => [...prev, { 
-            type: 'remove', 
-            cellKey,
-            piece: removedPiece.type 
-          }]);
-        } else if (selectedPiece) {
-          // Place the selected piece
-          setPlacedPieces(prev => ({
-            ...prev,
-            [cellKey]: {
-              type: selectedPiece,
-              // We'll add more properties as needed
-            }
-          }));
-          // Add to move history
-          setMoveHistory(prev => [...prev, { type: 'place', cellKey, piece: selectedPiece }]);
-        }
-      }
-    }
-  };
-
-  const handlePieceSelect = useCallback((piece) => {
-    setSelectedPiece(piece === selectedPiece ? null : piece);
-    // Exit erase mode when selecting a piece
-    if (eraseMode) {
-      setEraseMode(false);
-    }
-  }, [selectedPiece, eraseMode]);
-
-  // Control button handlers
-  const handleInfo = useCallback(() => {
-    setShowInfoPopup(true);
-  }, []);
-
-  const handleHelp = useCallback(() => {
-    setShowHelpPopup(true);
-  }, []);
-
-  const handleUndo = useCallback(() => {
-    if (moveHistory.length > 0) {
-      const lastMove = moveHistory[moveHistory.length - 1];
-      setPlacedPieces(prev => {
-        const newPieces = { ...prev };
-        if (lastMove.type === 'place') {
-          // Remove the piece that was placed
-          delete newPieces[lastMove.cellKey];
-        } else if (lastMove.type === 'remove') {
-          // Restore the piece that was removed
-          newPieces[lastMove.cellKey] = {
-            type: lastMove.piece,
-            // We'll add more properties as needed
-          };
-        }
-        return newPieces;
-      });
-      setMoveHistory(prev => prev.slice(0, -1));
-    }
-  }, [moveHistory]);
-
-  const handleErase = useCallback(() => {
-    // Toggle erase mode
-    setEraseMode(prev => !prev);
-    // Clear selected piece when entering erase mode
-    if (!eraseMode) {
-      setSelectedPiece(null);
-    }
-  }, [eraseMode]);
-
-  const handleHint = useCallback(() => {
-    setShowHintPopup(true);
-  }, []);
-
-  const handleRuler = useCallback(() => {
-    if (!selectedPiece) {
-      setShowRulerPopup(true);
-    } else {
-      setRulerActive(prev => !prev);
-    }
-  }, [selectedPiece]);
-
-  const handlePrevious = useCallback(() => {
-    // TODO: Navigate to previous puzzle
-    console.log('Previous button clicked');
-  }, []);
-
-  const handleNext = useCallback(() => {
-    // TODO: Navigate to next puzzle
-    console.log('Next button clicked');
-  }, []);
-
-  // Get the appropriate image path based on the stage and piece type
-  const getPieceImagePath = (pieceType, isInitial = false) => {
-    if (stage === 3) {
-      // Stage 3 uses number pieces
-      return `/src/assets/tiles/base/Numbers/${pieceType}.png`;
-    } else {
-      // Stages 1 and 2 use duck pieces
-      return `/src/assets/tiles/base/${isInitial ? 'Game Placed Pieces' : 'Player Pieces'}/${pieceType}.png`;
-    }
-  };
-
-  // Function to check if a placement is valid
-  const isValidPlacement = useCallback((rowIndex, colIndex, pieceType) => {
     const cellKey = `${rowIndex}-${colIndex}`;
-    
-    // Check if cell is playable and empty
-    if (!isPlayableCell(rowIndex, colIndex) || initialPieces[cellKey] || placedPieces[cellKey]) {
-      return false;
-    }
-
-    // Check row for duplicates
-    for (let col = 0; col < boardLayout.cols; col++) {
-      const checkKey = `${rowIndex}-${col}`;
-      const placedPiece = placedPieces[checkKey];
-      const initialPiece = initialPieces[checkKey];
-      if ((placedPiece && placedPiece.type === pieceType) || 
-          (initialPiece && initialPiece === pieceType)) {
-        return false;
+    setPlacedPieces(prev => ({
+      ...prev,
+      [cellKey]: {
+        type: selectedPiece,
+        position: { row: rowIndex, col: colIndex }
       }
+    }));
+    setSelectedPiece(null);
+  };
+
+  const getPieceImagePath = (pieceType) => {
+    if (stage === 3) {
+      return `/src/assets/tiles/numbers/${pieceType}.png`;
     }
-
-    // Check column for duplicates
-    for (let row = 0; row < boardLayout.rows; row++) {
-      const checkKey = `${row}-${colIndex}`;
-      const placedPiece = placedPieces[checkKey];
-      const initialPiece = initialPieces[checkKey];
-      if ((placedPiece && placedPiece.type === pieceType) || 
-          (initialPiece && initialPiece === pieceType)) {
-        return false;
-      }
-    }
-
-    // Check pen for duplicates
-    const penStartRow = Math.floor(rowIndex / 2) * 2;
-    const penStartCol = Math.floor(colIndex / 2) * 2;
-    for (let row = penStartRow; row < penStartRow + 2; row++) {
-      for (let col = penStartCol; col < penStartCol + 2; col++) {
-        const checkKey = `${row}-${col}`;
-        const placedPiece = placedPieces[checkKey];
-        const initialPiece = initialPieces[checkKey];
-        if ((placedPiece && placedPiece.type === pieceType) || 
-            (initialPiece && initialPiece === pieceType)) {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }, [boardLayout, initialPieces, placedPieces]);
-
-  // Function to find valid placements for a piece
-  const findValidPlacements = useCallback((pieceType) => {
-    const validSpots = [];
-    for (let row = 0; row < boardLayout.rows; row++) {
-      for (let col = 0; col < boardLayout.cols; col++) {
-        if (isValidPlacement(row, col, pieceType)) {
-          validSpots.push({ row, col });
-        }
-      }
-    }
-    return validSpots;
-  }, [boardLayout, isValidPlacement]);
-
-  // Function to check if a cell is in the same row/column as a piece of the same type
-  const isRestrictedCell = useCallback((rowIndex, colIndex) => {
-    if (!rulerActive || !selectedPiece) return false;
-
-    // Check row for same type pieces
-    for (let col = 0; col < boardLayout.cols; col++) {
-      const checkKey = `${rowIndex}-${col}`;
-      const placedPiece = placedPieces[checkKey];
-      const initialPiece = initialPieces[checkKey];
-      if ((placedPiece && placedPiece.type === selectedPiece) || 
-          (initialPiece && initialPiece === selectedPiece)) {
-        return true;
-      }
-    }
-
-    // Check column for same type pieces
-    for (let row = 0; row < boardLayout.rows; row++) {
-      const checkKey = `${row}-${colIndex}`;
-      const placedPiece = placedPieces[checkKey];
-      const initialPiece = initialPieces[checkKey];
-      if ((placedPiece && placedPiece.type === selectedPiece) || 
-          (initialPiece && initialPiece === selectedPiece)) {
-        return true;
-      }
-    }
-
-    return false;
-  }, [rulerActive, selectedPiece, boardLayout, placedPieces, initialPieces]);
+    const pieceNames = {
+      '1': '1-Una.png',
+      '2': '2-Dux.png',
+      '3': '3-Trey.png',
+      '4': '4-Quacko.png',
+      '5': '5-Lima.png',
+      '6': '6-Hex.png',
+      '7': '7-Set.png',
+      '8': '8-Otto.png',
+      '9': '9-Tisa.png'
+    };
+    return `/src/assets/tiles/base/Player Pieces/${pieceNames[pieceType]}`;
+  };
 
   return (
-    <div className="game-board" style={{
-      display: 'grid',
-      gridTemplateColumns: `repeat(${boardLayout.cols}, 1fr)`,
-      gap: '0',
-      width: '100%',
-      maxWidth: '800px',
-      margin: '0 auto',
-      position: 'relative'
-    }}>
-      {boardLayout.layout.map((row, rowIndex) => (
-        row.map((tile, colIndex) => {
-          const cellKey = `${rowIndex}-${colIndex}`;
-          const hasInitialPiece = initialPieces[cellKey];
-          const hasPlacedPiece = placedPieces[cellKey];
-          const isRestricted = isRestrictedCell(rowIndex, colIndex);
-
-          return (
-            <div
-              key={cellKey}
-              className={`board-tile ${isPlayableCell(rowIndex, colIndex) ? 'playable' : ''}`}
-              onClick={() => handleCellClick(rowIndex, colIndex)}
-              style={{
-                width: '100%',
-                aspectRatio: '1',
-                backgroundImage: `url(/src/assets/tiles/base/Game Board/${tile})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                cursor: isPlayableCell(rowIndex, colIndex) && !hasInitialPiece ? 
-                  (eraseMode ? 'crosshair' : 'pointer') : 'default',
-                position: 'relative'
-              }}
-            >
-              {isPlayableCell(rowIndex, colIndex) && !hasInitialPiece && (
+    <div className="game-container">
+      <div className="game-board-container">
+        <div className="game-board">
+          {boardLayout.map((row, rowIndex) => (
+            row.map((cell, colIndex) => {
+              const cellKey = `${rowIndex}-${colIndex}`;
+              const placedPiece = placedPieces[cellKey];
+              const tileImage = tileImages[cell];
+              
+              return (
                 <div
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    border: '2px solid transparent',
-                    transition: 'border-color 0.2s',
-                    backgroundColor: isRestricted ? 'rgba(255, 0, 0, 0.2)' : 'transparent',
-                    ':hover': {
-                      borderColor: eraseMode ? '#ff4444' : '#4CAF50'
-                    }
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = eraseMode ? '#ff4444' : '#4CAF50';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'transparent';
-                  }}
-                />
-              )}
-              {hasInitialPiece && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: '80%',
-                    height: '80%',
-                    backgroundImage: `url(${getPieceImagePath(initialPieces[cellKey], true)})`,
-                    backgroundSize: 'contain',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat'
-                  }}
-                />
-              )}
-              {hasPlacedPiece && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: '80%',
-                    height: '80%',
-                    backgroundImage: `url(${getPieceImagePath(hasPlacedPiece.type)})`,
-                    backgroundSize: 'contain',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat'
-                  }}
-                />
-              )}
-            </div>
-          );
-        })
-      ))}
-      <ControlButtons
-        onInfo={handleInfo}
-        onHelp={handleHelp}
-        onUndo={handleUndo}
-        onErase={handleErase}
-        onHint={handleHint}
-        onRuler={handleRuler}
-        onPrevious={handlePrevious}
-        onNext={handleNext}
-        canUndo={moveHistory.length > 0}
-        canErase={Object.keys(placedPieces).length > 0}
-        canHint={true}
-        canRuler={true}
-        canNavigate={true}
-        hasPreviousPuzzle={hasPreviousPuzzle}
-        hasNextPuzzle={hasNextPuzzle}
-      />
-      <PieceSelector
-        gameType={gameType}
-        selectedPiece={selectedPiece}
-        onPieceSelect={handlePieceSelect}
-        stage={stage}
-        placedPieces={placedPieces}
-      />
-      {showInfoPopup && <InfoPopup onClose={() => setShowInfoPopup(false)} />}
-      {showHelpPopup && <HelpPopup onClose={() => setShowHelpPopup(false)} />}
-      {showHintPopup && (
-        <HintPopup 
-          onClose={() => setShowHintPopup(false)}
-          selectedPiece={selectedPiece}
-          validPlacements={selectedPiece ? findValidPlacements(selectedPiece) : []}
+                  key={cellKey}
+                  className="board-cell"
+                  onClick={() => handleCellClick(rowIndex, colIndex)}
+                >
+                  <img
+                    src={tileImage}
+                    alt="Board tile"
+                    className="board-tile"
+                    onError={(e) => {
+                      console.error(`Failed to load tile: ${cell}`);
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                  {placedPiece && (
+                    <img
+                      src={getPieceImagePath(placedPiece.type)}
+                      alt={`Piece ${placedPiece.type}`}
+                      className="placed-piece"
+                    />
+                  )}
+                </div>
+              );
+            })
+          ))}
+          <div className="piece-selector-row">
+            <PieceSelector
+              gameType={gameType}
+              selectedPiece={selectedPiece}
+              onPieceSelect={setSelectedPiece}
+              stage={stage}
+              placedPieces={placedPieces}
+            />
+          </div>
+        </div>
+        <ControlButtons
+          canUndo={canUndo}
+          canErase={canErase}
+          canHint={canHint}
+          canRuler={canRuler}
+          canPrevious={canPrevious}
+          canNext={canNext}
         />
-      )}
-      {showRulerPopup && <RulerPopup onClose={() => setShowRulerPopup(false)} />}
+      </div>
     </div>
   );
 };

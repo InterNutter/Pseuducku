@@ -1,5 +1,25 @@
 import React from 'react';
 
+// Import all UI images
+import duck1Active from '../assets/tiles/ui/Duck1-select_active.png';
+import duck1Inactive from '../assets/tiles/ui/Duck1-select_inactive.png';
+import duck2Active from '../assets/tiles/ui/Duck2-select_active.png';
+import duck2Inactive from '../assets/tiles/ui/Duck2-select_inactive.png';
+import duck3Active from '../assets/tiles/ui/Duck3-select_active.png';
+import duck3Inactive from '../assets/tiles/ui/Duck3-select_inactive.png';
+import duck4Active from '../assets/tiles/ui/Duck4-select_active.png';
+import duck4Inactive from '../assets/tiles/ui/Duck4-select_inactive.png';
+import duck5Active from '../assets/tiles/ui/Duck5-select_active.png';
+import duck5Inactive from '../assets/tiles/ui/Duck5-select_inactive.png';
+import duck6Active from '../assets/tiles/ui/Duck6-select_active.png';
+import duck6Inactive from '../assets/tiles/ui/Duck6-select_inactive.png';
+import duck7Active from '../assets/tiles/ui/Duck7-select_active.png';
+import duck7Inactive from '../assets/tiles/ui/Duck7-select_inactive.png';
+import duck8Active from '../assets/tiles/ui/Duck8-select_active.png';
+import duck8Inactive from '../assets/tiles/ui/Duck8-select_inactive.png';
+import duck9Active from '../assets/tiles/ui/Duck9-select_active.png';
+import duck9Inactive from '../assets/tiles/ui/Duck9-select_inactive.png';
+
 const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPieces = {} }) => {
   const getPieceImage = (pieceType, isSelected) => {
     if (stage === 3) {
@@ -10,58 +30,58 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
       const isPlaced = Object.values(placedPieces).some(piece => piece.type === pieceType);
       const pieceImages = {
         '1': {
-          active: '/src/assets/tiles/ui/Duck1-select_active.png',
-          inactive: '/src/assets/tiles/ui/Duck1-select_inactive.png',
-          normal: '/src/assets/tiles/ui/Duck1-select.png'
+          active: duck1Active,
+          inactive: duck1Inactive,
+          normal: duck1Active
         },
         '2': {
-          active: '/src/assets/tiles/ui/Duck2-select_active.png',
-          inactive: '/src/assets/tiles/ui/Duck2-select_inactive.png',
-          normal: '/src/assets/tiles/ui/Duck2-select.png'
+          active: duck2Active,
+          inactive: duck2Inactive,
+          normal: duck2Active
         },
         '3': {
-          active: '/src/assets/tiles/ui/Duck3-select_active.png',
-          inactive: '/src/assets/tiles/ui/Duck3-select_inactive.png',
-          normal: '/src/assets/tiles/ui/Duck3-select.png'
+          active: duck3Active,
+          inactive: duck3Inactive,
+          normal: duck3Active
         },
         '4': {
-          active: '/src/assets/tiles/ui/Duck4-select_active.png',
-          inactive: '/src/assets/tiles/ui/Duck4-select_inactive.png',
-          normal: '/src/assets/tiles/ui/Duck4-select.png'
+          active: duck4Active,
+          inactive: duck4Inactive,
+          normal: duck4Active
         },
         '5': {
-          active: '/src/assets/tiles/ui/Duck5-select_active.png',
-          inactive: '/src/assets/tiles/ui/Duck5-select_inactive.png',
-          normal: '/src/assets/tiles/ui/Duck5-select.png'
+          active: duck5Active,
+          inactive: duck5Inactive,
+          normal: duck5Active
         },
         '6': {
-          active: '/src/assets/tiles/ui/Duck6-select_active.png',
-          inactive: '/src/assets/tiles/ui/Duck6-select_inactive.png',
-          normal: '/src/assets/tiles/ui/Duck6-select.png'
+          active: duck6Active,
+          inactive: duck6Inactive,
+          normal: duck6Active
         },
         '7': {
-          active: '/src/assets/tiles/ui/Duck7-select_active.png',
-          inactive: '/src/assets/tiles/ui/Duck7-select_inactive.png',
-          normal: '/src/assets/tiles/ui/Duck7-select.png'
+          active: duck7Active,
+          inactive: duck7Inactive,
+          normal: duck7Active
         },
         '8': {
-          active: '/src/assets/tiles/ui/Duck8-select_active.png',
-          inactive: '/src/assets/tiles/ui/Duck8-select_inactive.png',
-          normal: '/src/assets/tiles/ui/Duck8-select.png'
+          active: duck8Active,
+          inactive: duck8Inactive,
+          normal: duck8Active
         },
         '9': {
-          active: '/src/assets/tiles/ui/Duck9-select_active.png',
-          inactive: '/src/assets/tiles/ui/Duck9-select_inactive.png',
-          normal: '/src/assets/tiles/ui/Duck9-select.png'
+          active: duck9Active,
+          inactive: duck9Inactive,
+          normal: duck9Active
         }
       };
       
       if (isPlaced) {
-        return pieceImages[pieceType]?.inactive || `/src/assets/tiles/ui/Duck${pieceType}-select_inactive.png`;
+        return pieceImages[pieceType]?.inactive;
       }
       return isSelected 
-        ? pieceImages[pieceType]?.active || `/src/assets/tiles/ui/Duck${pieceType}-select_active.png`
-        : pieceImages[pieceType]?.normal || `/src/assets/tiles/ui/Duck${pieceType}-select.png`;
+        ? pieceImages[pieceType]?.active
+        : pieceImages[pieceType]?.normal;
     }
   };
 
@@ -87,72 +107,27 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
   const pieces = gameType === '4x4' ? ['1', '2', '3', '4'] : ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
   return (
-    <div style={{
-      position: 'absolute',
-      left: '-100px',
-      top: '50%',
-      transform: 'translateY(-50%)',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '10px'
-    }}>
+    <div className="piece-selector">
       {pieces.map(piece => {
         const isPlaced = Object.values(placedPieces).some(p => p.type === piece);
         return (
-          <div key={piece} style={{ position: 'relative' }}>
+          <div key={piece} className="piece-container">
             <button
               onClick={() => !isPlaced && onPieceSelect(piece === selectedPiece ? null : piece)}
               disabled={isPlaced}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                cursor: isPlaced ? 'default' : 'pointer',
-                width: '60px',
-                height: '60px',
-                opacity: isPlaced ? 0.5 : 1
-              }}
+              className={`piece-button ${piece === selectedPiece ? 'selected' : ''} ${isPlaced ? 'disabled' : ''}`}
             >
               <img
                 src={getPieceImage(piece, piece === selectedPiece)}
                 alt={`Select ${piece}`}
-                style={{ width: '100%', height: '100%' }}
               />
             </button>
-            <div
-              style={{
-                position: 'absolute',
-                left: '70px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                color: 'white',
-                padding: '10px',
-                borderRadius: '5px',
-                fontSize: '14px',
-                maxWidth: '200px',
-                display: 'none',
-                zIndex: 1000
-              }}
-              className="piece-explanation"
-            >
+            <div className="piece-explanation">
               {getPieceExplanation(piece)}
             </div>
           </div>
         );
       })}
-      <style>
-        {`
-          .piece-explanation {
-            opacity: 0;
-            transition: opacity 0.2s;
-          }
-          button:hover + .piece-explanation {
-            display: block;
-            opacity: 1;
-          }
-        `}
-      </style>
     </div>
   );
 };

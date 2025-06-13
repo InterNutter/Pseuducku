@@ -12,14 +12,26 @@ export const BOARD_LAYOUTS = {
       ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-upper-corner.png', 'MT_right-upper-corner.png', 'MT_left-upper-corner.png', 'MT_right-upper-corner.png', 'MT_left-middle-side.png', ...Array(7).fill('MT_empty.png')],
       // Row 4
       ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-lower-corner.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_right-lower-corner.png', 'MT_left-middle-side.png', ...Array(7).fill('MT_empty.png')],
-      // Row 5
+      // Row 5 (copy of row 3)
       ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-upper-corner.png', 'MT_right-upper-corner.png', 'MT_left-upper-corner.png', 'MT_right-upper-corner.png', 'MT_left-middle-side.png', ...Array(7).fill('MT_empty.png')],
-      // Row 6
-      ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-lower-corner.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_left-middle-side.png', ...Array(7).fill('MT_empty.png')],
+      // Row 6 (copy of row 4)
+      ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-lower-corner.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_right-lower-corner.png', 'MT_left-middle-side.png', ...Array(7).fill('MT_empty.png')],
       // Row 7
       ['MT_empty.png', 'MT_corner-upper-right.png', ...Array(4).fill('MT_upper-middle-side.png'), 'MT_corner-upper-left.png', ...Array(7).fill('MT_empty.png')],
-      // Rows 8-14
-      ...Array(7).fill(Array(14).fill('MT_empty.png'))
+      // Row 8
+      Array(14).fill('MT_empty.png'),
+      // Row 9
+      Array(14).fill('MT_empty.png'),
+      // Row 10
+      Array(14).fill('MT_empty.png'),
+      // Row 11
+      Array(14).fill('MT_empty.png'),
+      // Row 12
+      Array(14).fill('MT_empty.png'),
+      // Row 13
+      Array(14).fill('MT_empty.png'),
+      // Row 14
+      Array(14).fill('MT_empty.png')
     ]
   },
   '9x9': {
@@ -35,19 +47,19 @@ export const BOARD_LAYOUTS = {
       // Row 4
       ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-middle-side.png', 'MT_empty.png', 'MT_right-middle-side.png', 'MT_left-middle-side.png', 'MT_empty.png', 'MT_right-middle-side.png', 'MT_left-middle-side.png', 'MT_empty.png', 'MT_right-middle-side.png', 'MT_left-middle-side.png', ...Array(2).fill('MT_empty.png')],
       // Row 5
-      ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_right-middle-side.png', ...Array(2).fill('MT_empty.png')],
+      ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-middle-side.png', ...Array(2).fill('MT_empty.png')],
       // Row 6
       ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-upper-corner.png', 'MT_upper-middle-side.png', 'MT_right-upper-corner.png', 'MT_left-upper-corner.png', 'MT_upper-middle-side.png', 'MT_right-upper-corner.png', 'MT_left-upper-corner.png', 'MT_upper-middle-side.png', 'MT_right-upper-corner.png', 'MT_left-middle-side.png', ...Array(2).fill('MT_empty.png')],
       // Row 7
       ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-middle-side.png', 'MT_empty.png', 'MT_right-middle-side.png', 'MT_left-middle-side.png', 'MT_empty.png', 'MT_right-middle-side.png', 'MT_left-middle-side.png', 'MT_empty.png', 'MT_right-middle-side.png', 'MT_left-middle-side.png', ...Array(2).fill('MT_empty.png')],
       // Row 8
-      ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_right-middle-side.png', ...Array(2).fill('MT_empty.png')],
+      ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-middle-side.png', ...Array(2).fill('MT_empty.png')],
       // Row 9
       ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-upper-corner.png', 'MT_upper-middle-side.png', 'MT_right-upper-corner.png', 'MT_left-upper-corner.png', 'MT_upper-middle-side.png', 'MT_right-upper-corner.png', 'MT_left-upper-corner.png', 'MT_upper-middle-side.png', 'MT_right-upper-corner.png', 'MT_left-middle-side.png', ...Array(2).fill('MT_empty.png')],
       // Row 10
       ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-middle-side.png', 'MT_empty.png', 'MT_right-middle-side.png', 'MT_left-middle-side.png', 'MT_empty.png', 'MT_right-middle-side.png', 'MT_left-middle-side.png', 'MT_empty.png', 'MT_right-middle-side.png', 'MT_left-middle-side.png', ...Array(2).fill('MT_empty.png')],
       // Row 11
-      ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_right-middle-side.png', ...Array(2).fill('MT_empty.png')],
+      ['MT_empty.png', 'MT_right-middle-side.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-lower-corner.png', 'MT_bottom-middle-side.png', 'MT_right-lower-corner.png', 'MT_left-middle-side.png', ...Array(2).fill('MT_empty.png')],
       // Row 12
       ['MT_empty.png', 'MT_corner-upper-right.png', ...Array(9).fill('MT_upper-middle-side.png'), 'MT_corner-upper-left.png', ...Array(2).fill('MT_empty.png')],
       // Rows 13-14
