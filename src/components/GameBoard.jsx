@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ControlButtons from './ControlButtons';
 import PieceSelector from './PieceSelector';
 import { BOARD_LAYOUTS } from '../utils/boardLayouts';
-import { PUZZLE_DATA } from '../utils/puzzleData';
+import { generatePuzzle } from '../utils/puzzleGenerator';
 
 // Import all tile images
 import emptyTile from '../assets/tiles/base/Game Board/MT_empty.png';
@@ -42,6 +42,7 @@ const tileImages = {
 const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
   const [selectedPiece, setSelectedPiece] = useState(null);
   const [placedPieces, setPlacedPieces] = useState({});
+  const [prePlacedPieces, setPrePlacedPieces] = useState({});
   const [canUndo, setCanUndo] = useState(false);
   const [canErase, setCanErase] = useState(false);
   const [canHint, setCanHint] = useState(false);
@@ -51,7 +52,15 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
 
   const boardLayout = BOARD_LAYOUTS[gameType].layout;
   const gridSize = BOARD_LAYOUTS[gameType].cols;
-  const prePlacedPieces = PUZZLE_DATA[gameType]?.stage1?.prePlacedPieces || {};
+
+  // Generate a new puzzle when the component mounts or gameType changes
+  useEffect(() => {
+    if (gameType === '4x4') {
+      const { prePlacedPieces: newPrePlacedPieces } = generatePuzzle();
+      setPrePlacedPieces(newPrePlacedPieces);
+      setPlacedPieces({});
+    }
+  }, [gameType]);
 
   const handleCellClick = (rowIndex, colIndex) => {
     if (!selectedPiece) return;
@@ -59,6 +68,13 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
     const cellKey = `${rowIndex}-${colIndex}`;
     // Don't allow placing pieces on pre-placed pieces
     if (prePlacedPieces[cellKey]) return;
+
+    // Count how many of this piece type are already placed
+    const pieceCount = Object.values(placedPieces).filter(p => p.type === selectedPiece).length;
+    if (pieceCount >= 4) {
+      console.log('Maximum number of this piece type already placed');
+      return;
+    }
 
     setPlacedPieces(prev => ({
       ...prev,
@@ -119,7 +135,7 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
                       e.target.style.display = 'none';
                     }}
                   />
-                  {prePlacedPiece && (
+                  {prePlacedPiece && !placedPieces[cellKey] && (
                     <img
                       src={getPieceImagePath(prePlacedPiece.type, true)}
                       alt={`Pre-placed piece ${prePlacedPiece.type}`}
