@@ -41,9 +41,11 @@ body {
 
 .game-board-container {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: row;
+  align-items: flex-start;
   gap: 20px;
+  padding: 20px;
+  position: relative;
 }
 
 .game-board {
@@ -56,6 +58,16 @@ body {
   position: relative;
   width: fit-content;
   height: fit-content;
+}
+
+.ui-button-column {
+  position: absolute;
+  left: 600px;  /* 12 columns * 50px = 600px (column 13) */
+  top: 50px;    /* 1 row * 50px = 50px (row 2) */
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  z-index: 2;
 }
 
 .board-cell {
@@ -89,10 +101,16 @@ body {
 }
 
 .placed-piece {
-  width: 80%;
-  height: 80%;
+  width: 50px;
+  height: 50px;
   position: relative;
   z-index: 1;
+}
+
+.placed-piece.pre-placed {
+  opacity: 0.8;
+  filter: grayscale(0.2);
+  pointer-events: none;
 }
 
 .piece-selector-row {
@@ -172,13 +190,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0;
-  position: absolute;
-  left: 640px;
-  top: 285px;
-  z-index: 2;
 }
 
 .control-button {
+  width: 50px;
+  height: 50px;
   background: none;
   border: none;
   padding: 0;
@@ -186,6 +202,7 @@ body {
   cursor: pointer;
   transition: transform 0.2s;
   line-height: 0;
+  position: relative;
 }
 
 .control-button:hover:not(:disabled) {
@@ -204,6 +221,9 @@ body {
   display: block;
   margin: 0;
   padding: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 h1 {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ControlButtons from './ControlButtons';
 import PieceSelector from './PieceSelector';
 import { BOARD_LAYOUTS } from '../utils/boardLayouts';
+import { PUZZLE_DATA } from '../utils/puzzleData';
 
 // Import all tile images
 import emptyTile from '../assets/tiles/base/Game Board/MT_empty.png';
@@ -50,11 +51,15 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
 
   const boardLayout = BOARD_LAYOUTS[gameType].layout;
   const gridSize = BOARD_LAYOUTS[gameType].cols;
+  const prePlacedPieces = PUZZLE_DATA[gameType]?.stage1?.prePlacedPieces || {};
 
   const handleCellClick = (rowIndex, colIndex) => {
     if (!selectedPiece) return;
-
+    
     const cellKey = `${rowIndex}-${colIndex}`;
+    // Don't allow placing pieces on pre-placed pieces
+    if (prePlacedPieces[cellKey]) return;
+
     setPlacedPieces(prev => ({
       ...prev,
       [cellKey]: {
@@ -65,10 +70,15 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
     setSelectedPiece(null);
   };
 
-  const getPieceImagePath = (pieceType) => {
+  const getPieceImagePath = (pieceType, isPrePlaced) => {
     if (stage === 3) {
       return `/src/assets/tiles/numbers/${pieceType}.png`;
     }
+    
+    if (isPrePlaced) {
+      return `/src/assets/tiles/base/Game Placed Pieces/SD${pieceType}.png`;
+    }
+    
     const pieceNames = {
       '1': '1-Una.png',
       '2': '2-Dux.png',
@@ -91,6 +101,7 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
             row.map((cell, colIndex) => {
               const cellKey = `${rowIndex}-${colIndex}`;
               const placedPiece = placedPieces[cellKey];
+              const prePlacedPiece = prePlacedPieces[cellKey];
               const tileImage = tileImages[cell];
               
               return (
@@ -108,9 +119,16 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
                       e.target.style.display = 'none';
                     }}
                   />
+                  {prePlacedPiece && (
+                    <img
+                      src={getPieceImagePath(prePlacedPiece.type, true)}
+                      alt={`Pre-placed piece ${prePlacedPiece.type}`}
+                      className="placed-piece pre-placed"
+                    />
+                  )}
                   {placedPiece && (
                     <img
-                      src={getPieceImagePath(placedPiece.type)}
+                      src={getPieceImagePath(placedPiece.type, false)}
                       alt={`Piece ${placedPiece.type}`}
                       className="placed-piece"
                     />
@@ -128,15 +146,17 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
               placedPieces={placedPieces}
             />
           </div>
+          <div className="ui-button-column">
+            <ControlButtons
+              canUndo={canUndo}
+              canErase={canErase}
+              canHint={canHint}
+              canRuler={canRuler}
+              canPrevious={canPrevious}
+              canNext={canNext}
+            />
+          </div>
         </div>
-        <ControlButtons
-          canUndo={canUndo}
-          canErase={canErase}
-          canHint={canHint}
-          canRuler={canRuler}
-          canPrevious={canPrevious}
-          canNext={canNext}
-        />
       </div>
     </div>
   );
