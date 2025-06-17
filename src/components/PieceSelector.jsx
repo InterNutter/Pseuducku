@@ -20,14 +20,77 @@ import duck8Inactive from '../assets/tiles/ui/Duck8-select_inactive.png';
 import duck9Active from '../assets/tiles/ui/Duck9-select_active.png';
 import duck9Inactive from '../assets/tiles/ui/Duck9-select_inactive.png';
 
-const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPieces = {} }) => {
+const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPieces = {}, prePlacedPieces = {} }) => {
+  // Function to check if a piece type can be placed anywhere
+  const canPlacePiece = (pieceType) => {
+    const validCells = gameType === '4x4' ? 
+      ['2-2', '2-3', '2-4', '2-5', '3-2', '3-3', '3-4', '3-5', '4-2', '4-3', '4-4', '4-5', '5-2', '5-3', '5-4', '5-5'] :
+      Array.from({length: 81}, (_, i) => {
+        const row = Math.floor(i / 9) + 2;
+        const col = (i % 9) + 2;
+        return `${row}-${col}`;
+      });
+    
+    // Check if there's any valid cell where this piece can be placed
+    for (const cellKey of validCells) {
+      const [row, col] = cellKey.split('-').map(Number);
+      
+      // Skip if cell is already occupied
+      if (placedPieces[cellKey] || prePlacedPieces[cellKey]) {
+        continue;
+      }
+      
+      // Check if this would violate Sudoku rules
+      let canPlace = true;
+      
+      // Check row
+      const rowStart = gameType === '4x4' ? 2 : 2;
+      const rowEnd = gameType === '4x4' ? 5 : 10;
+      
+      for (let c = rowStart; c <= rowEnd; c++) {
+        const checkCellKey = `${row}-${c}`;
+        const placedPiece = placedPieces[checkCellKey];
+        const prePlacedPiece = prePlacedPieces[checkCellKey];
+        
+        if ((placedPiece && placedPiece.type === pieceType) || 
+            (prePlacedPiece && prePlacedPiece.type === pieceType)) {
+          canPlace = false;
+          break;
+        }
+      }
+      
+      if (!canPlace) continue;
+      
+      // Check column
+      const colStart = gameType === '4x4' ? 2 : 2;
+      const colEnd = gameType === '4x4' ? 5 : 10;
+      
+      for (let r = colStart; r <= colEnd; r++) {
+        const checkCellKey = `${r}-${col}`;
+        const placedPiece = placedPieces[checkCellKey];
+        const prePlacedPiece = prePlacedPieces[checkCellKey];
+        
+        if ((placedPiece && placedPiece.type === pieceType) || 
+            (prePlacedPiece && prePlacedPiece.type === pieceType)) {
+          canPlace = false;
+          break;
+        }
+      }
+      
+      if (canPlace) {
+        return true; // Found a valid placement
+      }
+    }
+    
+    return false; // No valid placement found
+  };
+
   const getPieceImage = (pieceType, isSelected) => {
     if (stage === 3) {
       // Stage 3 uses number pieces
       return `/src/assets/tiles/base/Numbers/${pieceType}.png`;
     } else {
       // Stages 1 and 2 use duck pieces
-      const isPlaced = Object.values(placedPieces).some(piece => piece.type === pieceType);
       const pieceImages = {
         '1': {
           active: duck1Active,
@@ -76,7 +139,10 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
         }
       };
       
-      if (isPlaced) {
+      // Check if we can place more of this piece type
+      const canPlace = canPlacePiece(pieceType);
+      
+      if (!canPlace) {
         return pieceImages[pieceType]?.inactive;
       }
       return isSelected 
@@ -109,13 +175,15 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
   return (
     <div className="piece-selector">
       {pieces.map(piece => {
-        const isPlaced = Object.values(placedPieces).some(p => p.type === piece);
+        const canPlace = canPlacePiece(piece);
+        const isDisabled = !canPlace;
+        
         return (
           <div key={piece} className="piece-container">
             <button
-              onClick={() => !isPlaced && onPieceSelect(piece === selectedPiece ? null : piece)}
-              disabled={isPlaced}
-              className={`piece-button ${piece === selectedPiece ? 'selected' : ''} ${isPlaced ? 'disabled' : ''}`}
+              onClick={() => !isDisabled && onPieceSelect(piece === selectedPiece ? null : piece)}
+              disabled={isDisabled}
+              className={`piece-button ${piece === selectedPiece ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
             >
               <img
                 src={getPieceImage(piece, piece === selectedPiece)}

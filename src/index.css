@@ -58,6 +58,8 @@ body {
   position: relative;
   width: fit-content;
   height: fit-content;
+  min-width: 700px; /* 14 * 50px */
+  min-height: 700px; /* 14 * 50px */
 }
 
 .ui-button-column {
@@ -159,7 +161,9 @@ body {
 
 .piece-button.selected {
   transform: scale(1.1);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 15px 5px rgba(255, 255, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.3);
+  border: 2px solid #ffff00;
+  border-radius: 8px;
 }
 
 .piece-button.disabled {

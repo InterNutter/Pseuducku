@@ -55,8 +55,10 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
 
   // Generate a new puzzle when the component mounts or gameType changes
   useEffect(() => {
-    if (gameType === '4x4') {
-      const { prePlacedPieces: newPrePlacedPieces } = generatePuzzle();
+    if (gameType === '4x4' || gameType === '9x9') {
+      const { prePlacedPieces: newPrePlacedPieces } = generatePuzzle(gameType);
+      console.log('Setting pre-placed pieces:', newPrePlacedPieces);
+      console.log('Pre-placed pieces keys:', Object.keys(newPrePlacedPieces));
       setPrePlacedPieces(newPrePlacedPieces);
       setPlacedPieces({});
     }
@@ -66,16 +68,62 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
     if (!selectedPiece) return;
     
     const cellKey = `${rowIndex}-${colIndex}`;
+    
+    // Debug logging
+    console.log('Cell clicked:', cellKey);
+    console.log('Selected piece:', selectedPiece);
+    console.log('Pre-placed pieces:', prePlacedPieces);
+    console.log('Is cell pre-placed?', !!prePlacedPieces[cellKey]);
+    
     // Don't allow placing pieces on pre-placed pieces
-    if (prePlacedPieces[cellKey]) return;
+    if (prePlacedPieces[cellKey]) {
+      console.log('Cannot place piece on pre-placed piece');
+      return;
+    }
+
+    // Check if this would violate Sudoku rules (same number in same row/column)
+    const maxPieces = gameType === '4x4' ? 4 : 9;
+    
+    // Check row - for 4x4, check the 4 cells in the same row; for 9x9, check the 9 cells
+    const rowStart = gameType === '4x4' ? 2 : 2;
+    const rowEnd = gameType === '4x4' ? 5 : 10;
+    
+    for (let c = rowStart; c <= rowEnd; c++) {
+      const checkCellKey = `${rowIndex}-${c}`;
+      const placedPiece = placedPieces[checkCellKey];
+      const prePlacedPiece = prePlacedPieces[checkCellKey];
+      
+      if ((placedPiece && placedPiece.type === selectedPiece) || 
+          (prePlacedPiece && prePlacedPiece.type === selectedPiece)) {
+        console.log('Cannot place same number in same row');
+        return;
+      }
+    }
+    
+    // Check column - for 4x4, check the 4 cells in the same column; for 9x9, check the 9 cells
+    const colStart = gameType === '4x4' ? 2 : 2;
+    const colEnd = gameType === '4x4' ? 5 : 10;
+    
+    for (let r = colStart; r <= colEnd; r++) {
+      const checkCellKey = `${r}-${colIndex}`;
+      const placedPiece = placedPieces[checkCellKey];
+      const prePlacedPiece = prePlacedPieces[checkCellKey];
+      
+      if ((placedPiece && placedPiece.type === selectedPiece) || 
+          (prePlacedPiece && prePlacedPiece.type === selectedPiece)) {
+        console.log('Cannot place same number in same column');
+        return;
+      }
+    }
 
     // Count how many of this piece type are already placed
     const pieceCount = Object.values(placedPieces).filter(p => p.type === selectedPiece).length;
-    if (pieceCount >= 4) {
+    if (pieceCount >= maxPieces) {
       console.log('Maximum number of this piece type already placed');
       return;
     }
 
+    console.log('Placing piece:', selectedPiece, 'at:', cellKey);
     setPlacedPieces(prev => ({
       ...prev,
       [cellKey]: {
@@ -83,7 +131,12 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
         position: { row: rowIndex, col: colIndex }
       }
     }));
-    setSelectedPiece(null);
+    
+    // Only clear the selected piece if we've placed the maximum number of this type
+    const newPieceCount = pieceCount + 1;
+    if (newPieceCount >= maxPieces) {
+      setSelectedPiece(null);
+    }
   };
 
   const getPieceImagePath = (pieceType, isPrePlaced) => {
@@ -160,6 +213,7 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
               onPieceSelect={setSelectedPiece}
               stage={stage}
               placedPieces={placedPieces}
+              prePlacedPieces={prePlacedPieces}
             />
           </div>
           <div className="ui-button-column">

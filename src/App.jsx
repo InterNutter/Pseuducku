@@ -22,15 +22,13 @@ function App() {
           9x9 Game
         </button>
       </div>
-      <div className="game-container">
-        <GameBoard 
-          gameType={gameType} 
-          stage={1}
-          initialPieces={{}}
-          hasPreviousPuzzle={false}
-          hasNextPuzzle={false}
-        />
-      </div>
+      <GameBoard 
+        gameType={gameType} 
+        stage={1}
+        initialPieces={{}}
+        hasPreviousPuzzle={false}
+        hasNextPuzzle={false}
+      />
     </div>
   );
 }
