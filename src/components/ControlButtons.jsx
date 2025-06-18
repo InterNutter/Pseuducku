@@ -28,13 +28,17 @@ const ControlButtons = ({
   canRuler,
   canNavigate,
   hasPreviousPuzzle,
-  hasNextPuzzle
+  hasNextPuzzle,
+  highlightedButton,
+  eraserMode,
+  hintMode,
+  rulerMode
 }) => {
   return (
     <div className="control-buttons">
       <button
         onClick={onInfo}
-        className="control-button"
+        className={`control-button ${highlightedButton === 'info' ? 'button-highlight' : ''}`}
       >
         <img
           src={infoButton}
@@ -43,7 +47,7 @@ const ControlButtons = ({
       </button>
       <button
         onClick={onHelp}
-        className="control-button"
+        className={`control-button ${highlightedButton === 'help' ? 'button-highlight' : ''}`}
       >
         <img
           src={helpButton}
@@ -53,7 +57,7 @@ const ControlButtons = ({
       <button
         onClick={onUndo}
         disabled={!canUndo}
-        className="control-button"
+        className={`control-button ${highlightedButton === 'undo' ? 'button-highlight' : ''}`}
       >
         <img
           src={canUndo ? undoButton : undoButtonDisabled}
@@ -63,7 +67,7 @@ const ControlButtons = ({
       <button
         onClick={onErase}
         disabled={!canErase}
-        className="control-button"
+        className={`control-button ${highlightedButton === 'erase' ? 'button-highlight' : ''} ${eraserMode ? 'eraser-active' : ''}`}
       >
         <img
           src={canErase ? eraseButton : eraseButtonDisabled}
@@ -73,7 +77,7 @@ const ControlButtons = ({
       <button
         onClick={onHint}
         disabled={!canHint}
-        className="control-button"
+        className={`control-button ${highlightedButton === 'hint' ? 'button-highlight' : ''} ${hintMode ? 'hint-active' : ''}`}
       >
         <img
           src={hintButton}
@@ -83,7 +87,7 @@ const ControlButtons = ({
       <button
         onClick={onRuler}
         disabled={!canRuler}
-        className="control-button"
+        className={`control-button ${highlightedButton === 'ruler' ? 'button-highlight' : ''} ${rulerMode ? 'ruler-active' : ''}`}
       >
         <img
           src={canRuler ? rulerButton : rulerButtonDisabled}
@@ -93,7 +97,7 @@ const ControlButtons = ({
       <button
         onClick={onPrevious}
         disabled={!hasPreviousPuzzle}
-        className="control-button"
+        className={`control-button ${highlightedButton === 'previous' ? 'button-highlight' : ''}`}
       >
         <img
           src={hasPreviousPuzzle ? prevButton : prevButtonDisabled}
@@ -103,7 +107,7 @@ const ControlButtons = ({
       <button
         onClick={onNext}
         disabled={!hasNextPuzzle}
-        className="control-button"
+        className={`control-button ${highlightedButton === 'next' ? 'button-highlight' : ''}`}
       >
         <img
           src={hasNextPuzzle ? nextButton : nextButtonDisabled}

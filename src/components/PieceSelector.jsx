@@ -20,9 +20,45 @@ import duck8Inactive from '../assets/tiles/ui/Duck8-select_inactive.png';
 import duck9Active from '../assets/tiles/ui/Duck9-select_active.png';
 import duck9Inactive from '../assets/tiles/ui/Duck9-select_inactive.png';
 
-const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPieces = {}, prePlacedPieces = {} }) => {
-  // Function to check if a piece type can be placed anywhere
+const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPieces = {}, prePlacedPieces = {}, highlightedButton }) => {
+  // Duck matching system: maps each duck to its corresponding pre-placed piece
+  const duckMatching = {
+    '1-Una': 'SD1',
+    '2-Dux': 'SD2', 
+    '3-Trey': 'SD3',
+    '4-Quacko': 'SD4',
+    '5-Lima': 'SD5',
+    '6-Hex': 'SD6',
+    '7-Set': 'SD7',
+    '8-Otto': 'SD8',
+    '9-Tisa': 'SD9'
+  };
+
+  // Helper function to get the matching pre-placed piece for a duck
+  const getMatchingPrePlacedPiece = (duckType) => {
+    return duckMatching[duckType];
+  };
+
+  // Function to check if a piece type can be placed anywhere using duck matching logic
   const canPlacePiece = (pieceType) => {
+    // First check if we've already placed the maximum number of this duck type
+    // Count both pre-placed pieces and player-placed pieces
+    const maxPieces = gameType === '4x4' ? 4 : 9;
+    
+    // Count player-placed pieces of this type
+    const playerPlacedCount = Object.values(placedPieces).filter(p => p.type === pieceType).length;
+    
+    // Count pre-placed pieces that match this duck type
+    const matchingPrePlacedPiece = getMatchingPrePlacedPiece(pieceType);
+    const prePlacedCount = Object.values(prePlacedPieces).filter(p => p.type === matchingPrePlacedPiece).length;
+    
+    // Total count of this duck type (both pre-placed and player-placed)
+    const totalCount = playerPlacedCount + prePlacedCount;
+    
+    if (totalCount >= maxPieces) {
+      return false; // Already placed maximum number of this duck type
+    }
+    
     const validCells = gameType === '4x4' ? 
       ['2-2', '2-3', '2-4', '2-5', '3-2', '3-3', '3-4', '3-5', '4-2', '4-3', '4-4', '4-5', '5-2', '5-3', '5-4', '5-5'] :
       Array.from({length: 81}, (_, i) => {
@@ -40,20 +76,24 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
         continue;
       }
       
-      // Check if this would violate Sudoku rules
+      // Check if this would violate duck matching rules
       let canPlace = true;
       
-      // Check row
-      const rowStart = gameType === '4x4' ? 2 : 2;
-      const rowEnd = gameType === '4x4' ? 5 : 10;
+      // Get the matching pre-placed piece for this duck
+      const matchingPrePlacedPiece = getMatchingPrePlacedPiece(pieceType);
+      if (!matchingPrePlacedPiece) {
+        continue; // Invalid duck type
+      }
       
-      for (let c = rowStart; c <= rowEnd; c++) {
+      // Check row - see if the matching pre-placed piece is in the same row
+      const gameStart = 2;
+      const gameEnd = gameType === '4x4' ? 5 : 10;
+      
+      for (let c = gameStart; c <= gameEnd; c++) {
         const checkCellKey = `${row}-${c}`;
-        const placedPiece = placedPieces[checkCellKey];
         const prePlacedPiece = prePlacedPieces[checkCellKey];
         
-        if ((placedPiece && placedPiece.type === pieceType) || 
-            (prePlacedPiece && prePlacedPiece.type === pieceType)) {
+        if (prePlacedPiece && prePlacedPiece.type === matchingPrePlacedPiece) {
           canPlace = false;
           break;
         }
@@ -61,17 +101,12 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
       
       if (!canPlace) continue;
       
-      // Check column
-      const colStart = gameType === '4x4' ? 2 : 2;
-      const colEnd = gameType === '4x4' ? 5 : 10;
-      
-      for (let r = colStart; r <= colEnd; r++) {
+      // Check column - see if the matching pre-placed piece is in the same column
+      for (let r = gameStart; r <= gameEnd; r++) {
         const checkCellKey = `${r}-${col}`;
-        const placedPiece = placedPieces[checkCellKey];
         const prePlacedPiece = prePlacedPieces[checkCellKey];
         
-        if ((placedPiece && placedPiece.type === pieceType) || 
-            (prePlacedPiece && prePlacedPiece.type === pieceType)) {
+        if (prePlacedPiece && prePlacedPiece.type === matchingPrePlacedPiece) {
           canPlace = false;
           break;
         }
@@ -87,52 +122,52 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
 
   const getPieceImage = (pieceType, isSelected) => {
     if (stage === 3) {
-      // Stage 3 uses number pieces
-      return `/src/assets/tiles/base/Numbers/${pieceType}.png`;
+      // Stage 3 uses number pieces - use the correct path
+      return `/src/assets/tiles/numbers/${pieceType}.png`;
     } else {
       // Stages 1 and 2 use duck pieces
       const pieceImages = {
-        '1': {
+        '1-Una': {
           active: duck1Active,
           inactive: duck1Inactive,
           normal: duck1Active
         },
-        '2': {
+        '2-Dux': {
           active: duck2Active,
           inactive: duck2Inactive,
           normal: duck2Active
         },
-        '3': {
+        '3-Trey': {
           active: duck3Active,
           inactive: duck3Inactive,
           normal: duck3Active
         },
-        '4': {
+        '4-Quacko': {
           active: duck4Active,
           inactive: duck4Inactive,
           normal: duck4Active
         },
-        '5': {
+        '5-Lima': {
           active: duck5Active,
           inactive: duck5Inactive,
           normal: duck5Active
         },
-        '6': {
+        '6-Hex': {
           active: duck6Active,
           inactive: duck6Inactive,
           normal: duck6Active
         },
-        '7': {
+        '7-Set': {
           active: duck7Active,
           inactive: duck7Inactive,
           normal: duck7Active
         },
-        '8': {
+        '8-Otto': {
           active: duck8Active,
           inactive: duck8Inactive,
           normal: duck8Active
         },
-        '9': {
+        '9-Tisa': {
           active: duck9Active,
           inactive: duck9Inactive,
           normal: duck9Active
@@ -156,38 +191,47 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
       return `This button lets you pick up, and later place, the number ${pieceType}.`;
     } else {
       const explanations = {
-        '1': 'This button lets you pick up, and later place, Una.',
-        '2': 'This button lets you pick up, and later place, Dux.',
-        '3': 'This button lets you pick up, and later place, Trey.',
-        '4': 'This button lets you pick up, and later place, Quacko.',
-        '5': 'This button lets you pick up, and later place, Lima.',
-        '6': 'This button lets you pick up, and later place, Hex.',
-        '7': 'This button lets you pick up, and later place, Set.',
-        '8': 'This button lets you pick up, and later place, Otto.',
-        '9': 'This button lets you pick up, and later place, Tisa.'
+        '1-Una': 'This button lets you pick up, and later place, Una.',
+        '2-Dux': 'This button lets you pick up, and later place, Dux.',
+        '3-Trey': 'This button lets you pick up, and later place, Trey.',
+        '4-Quacko': 'This button lets you pick up, and later place, Quacko.',
+        '5-Lima': 'This button lets you pick up, and later place, Lima.',
+        '6-Hex': 'This button lets you pick up, and later place, Hex.',
+        '7-Set': 'This button lets you pick up, and later place, Set.',
+        '8-Otto': 'This button lets you pick up, and later place, Otto.',
+        '9-Tisa': 'This button lets you pick up, and later place, Tisa.'
       };
-      return explanations[pieceType] || `This button lets you pick up, and later place, duck ${pieceType}.`;
+      return explanations[pieceType] || `This button lets you pick up, and later place, ${pieceType}.`;
     }
   };
 
-  const pieces = gameType === '4x4' ? ['1', '2', '3', '4'] : ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  const pieces = gameType === '4x4' ? ['1-Una', '2-Dux', '3-Trey', '4-Quacko'] : ['1-Una', '2-Dux', '3-Trey', '4-Quacko', '5-Lima', '6-Hex', '7-Set', '8-Otto', '9-Tisa'];
 
   return (
     <div className="piece-selector">
       {pieces.map(piece => {
         const canPlace = canPlacePiece(piece);
         const isDisabled = !canPlace;
+        const isHighlighted = highlightedButton === 'piece-selector';
         
         return (
           <div key={piece} className="piece-container">
             <button
-              onClick={() => !isDisabled && onPieceSelect(piece === selectedPiece ? null : piece)}
+              onClick={() => {
+                console.log(`Piece ${piece} clicked`);
+                if (!isDisabled) {
+                  onPieceSelect(piece === selectedPiece ? null : piece);
+                }
+              }}
               disabled={isDisabled}
-              className={`piece-button ${piece === selectedPiece ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
+              className={`piece-button ${piece === selectedPiece ? 'selected' : ''} ${isDisabled ? 'disabled' : ''} ${isHighlighted ? 'button-highlight' : ''}`}
             >
               <img
                 src={getPieceImage(piece, piece === selectedPiece)}
                 alt={`Select ${piece}`}
+                onError={(e) => {
+                  console.error(`Failed to load piece image for ${piece}:`, e.target.src);
+                }}
               />
             </button>
             <div className="piece-explanation">

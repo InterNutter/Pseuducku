@@ -126,7 +126,7 @@ export const generatePuzzle = (gameType = '4x4') => {
       const pieceType = completeSolution[solutionRow][solutionCol];
       if (pieceType) {
         prePlacedPieces[cellKey] = {
-          type: pieceType.toString(),
+          type: `SD${pieceType}`,
           isPrePlaced: true
         };
       }
@@ -167,7 +167,7 @@ export const generatePuzzle = (gameType = '4x4') => {
       const pieceType = completeSolution[solutionRow][solutionCol];
       if (pieceType) {
         prePlacedPieces[cellKey] = {
-          type: pieceType.toString(),
+          type: `SD${pieceType}`,
           isPrePlaced: true
         };
       }
@@ -190,93 +190,35 @@ const generateCompleteSolution = () => {
     [4, 3, 2, 1]
   ];
   
-  // Randomly shuffle the solution to create variety
-  // We can swap rows, columns, or numbers while maintaining validity
-  const shuffledSolution = shuffleSolution(solution);
-  
-  return shuffledSolution;
-};
-
-// Function to shuffle a valid solution while keeping it valid
-const shuffleSolution = (solution) => {
-  const newSolution = solution.map(row => [...row]);
-  const size = solution.length; // 4 for 4x4, 9 for 9x9
-  
-  // Randomly decide what transformations to apply
-  const transformations = Math.floor(Math.random() * 4);
+  // Apply simple transformations that maintain validity
+  const transformations = Math.floor(Math.random() * 3);
   
   switch (transformations) {
     case 0:
-      // Swap rows within the same block
-      if (size === 4) {
-        // For 4x4: swap rows 1-2 and 3-4
-        [newSolution[0], newSolution[1]] = [newSolution[1], newSolution[0]];
-        [newSolution[2], newSolution[3]] = [newSolution[3], newSolution[2]];
-      } else {
-        // For 9x9: swap rows within the same 3x3 block
-        const block1 = Math.floor(Math.random() * 3) * 3;
-        const block2 = Math.floor(Math.random() * 3) * 3;
-        const row1 = block1 + Math.floor(Math.random() * 3);
-        const row2 = block2 + Math.floor(Math.random() * 3);
-        [newSolution[row1], newSolution[row2]] = [newSolution[row2], newSolution[row1]];
-      }
+      // Swap rows 1-2 and 3-4
+      [solution[0], solution[1]] = [solution[1], solution[0]];
+      [solution[2], solution[3]] = [solution[3], solution[2]];
       break;
     case 1:
-      // Swap columns within the same block
-      if (size === 4) {
-        // For 4x4: swap columns 1-2 and 3-4
-        for (let i = 0; i < 4; i++) {
-          [newSolution[i][0], newSolution[i][1]] = [newSolution[i][1], newSolution[i][0]];
-          [newSolution[i][2], newSolution[i][3]] = [newSolution[i][3], newSolution[i][2]];
-        }
-      } else {
-        // For 9x9: swap columns within the same 3x3 block
-        const block1 = Math.floor(Math.random() * 3) * 3;
-        const block2 = Math.floor(Math.random() * 3) * 3;
-        const col1 = block1 + Math.floor(Math.random() * 3);
-        const col2 = block2 + Math.floor(Math.random() * 3);
-        for (let i = 0; i < 9; i++) {
-          [newSolution[i][col1], newSolution[i][col2]] = [newSolution[i][col2], newSolution[i][col1]];
-        }
+      // Swap columns 1-2 and 3-4
+      for (let i = 0; i < 4; i++) {
+        [solution[i][0], solution[i][1]] = [solution[i][1], solution[i][0]];
+        [solution[i][2], solution[i][3]] = [solution[i][3], solution[i][2]];
       }
       break;
     case 2:
-      // Swap numbers
-      if (size === 4) {
-        // For 4x4: swap numbers 1-2 and 3-4
-        for (let i = 0; i < 4; i++) {
-          for (let j = 0; j < 4; j++) {
-            if (newSolution[i][j] === 1) newSolution[i][j] = 2;
-            else if (newSolution[i][j] === 2) newSolution[i][j] = 1;
-            else if (newSolution[i][j] === 3) newSolution[i][j] = 4;
-            else if (newSolution[i][j] === 4) newSolution[i][j] = 3;
-          }
-        }
-      } else {
-        // For 9x9: swap two random numbers
-        const num1 = Math.floor(Math.random() * 9) + 1;
-        const num2 = Math.floor(Math.random() * 9) + 1;
-        for (let i = 0; i < 9; i++) {
-          for (let j = 0; j < 9; j++) {
-            if (newSolution[i][j] === num1) newSolution[i][j] = num2;
-            else if (newSolution[i][j] === num2) newSolution[i][j] = num1;
-          }
-        }
-      }
-      break;
-    case 3:
-      // Rotate the grid 90 degrees
+      // Rotate 90 degrees
       const rotated = [];
-      for (let i = 0; i < size; i++) {
+      for (let i = 0; i < 4; i++) {
         rotated[i] = [];
-        for (let j = 0; j < size; j++) {
-          rotated[i][j] = newSolution[size - 1 - j][i];
+        for (let j = 0; j < 4; j++) {
+          rotated[i][j] = solution[3 - j][i];
         }
       }
       return rotated;
   }
   
-  return newSolution;
+  return solution;
 };
 
 // Function to generate a complete valid 9x9 Sudoku solution
@@ -294,9 +236,41 @@ const generateComplete9x9Solution = () => {
     [9, 1, 2, 3, 4, 5, 6, 7, 8]
   ];
   
-  // Randomly shuffle the solution to create variety
-  // We can swap rows, columns, or numbers while maintaining validity
-  const shuffledSolution = shuffleSolution(solution);
+  // Apply simple transformations that maintain validity
+  const transformations = Math.floor(Math.random() * 3);
   
-  return shuffledSolution;
+  switch (transformations) {
+    case 0:
+      // Swap rows within the same 3x3 block
+      const block1 = Math.floor(Math.random() * 3) * 3;
+      const row1 = block1 + Math.floor(Math.random() * 3);
+      const row2 = block1 + Math.floor(Math.random() * 3);
+      if (row1 !== row2) {
+        [solution[row1], solution[row2]] = [solution[row2], solution[row1]];
+      }
+      break;
+    case 1:
+      // Swap columns within the same 3x3 block
+      const block2 = Math.floor(Math.random() * 3) * 3;
+      const col1 = block2 + Math.floor(Math.random() * 3);
+      const col2 = block2 + Math.floor(Math.random() * 3);
+      if (col1 !== col2) {
+        for (let i = 0; i < 9; i++) {
+          [solution[i][col1], solution[i][col2]] = [solution[i][col2], solution[i][col1]];
+        }
+      }
+      break;
+    case 2:
+      // Rotate 90 degrees
+      const rotated = [];
+      for (let i = 0; i < 9; i++) {
+        rotated[i] = [];
+        for (let j = 0; j < 9; j++) {
+          rotated[i][j] = solution[8 - j][i];
+        }
+      }
+      return rotated;
+  }
+  
+  return solution;
 }; 
