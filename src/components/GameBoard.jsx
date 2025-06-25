@@ -198,7 +198,8 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
     setCanErase(Object.keys(placedPieces).length > 0 || eraserMode);
     setCanHint(selectedPiece !== null && !eraserMode);
     setCanRuler(selectedPiece !== null && !eraserMode);
-  }, [moveHistory.length, placedPieces, selectedPiece, eraserMode, hintMode]);
+    setCanPrevious(currentPuzzleIndex > 0);
+  }, [moveHistory.length, placedPieces, selectedPiece, eraserMode, currentPuzzleIndex]);
 
   const handleCellClick = (rowIndex, colIndex) => {
     const cellKey = `${rowIndex}-${colIndex}`;
