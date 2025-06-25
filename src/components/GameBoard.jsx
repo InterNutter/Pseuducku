@@ -241,15 +241,15 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
 
   const getPieceImagePath = (pieceType, isPrePlaced) => {
     if (stage === 3) {
-      return `/src/assets/tiles/numbers/${pieceType}.png`;
+      return `/assets/tiles/numbers/${pieceType}.png`;
     }
     
     if (isPrePlaced) {
-      return `/src/assets/tiles/base/Game Placed Pieces/${pieceType}.png`;
+      return `/assets/tiles/base/Game Placed Pieces/${pieceType}.png`;
     }
     
     // For player pieces, use the full duck name
-    return `/src/assets/tiles/base/Player Pieces/${pieceType}.png`;
+    return `/assets/tiles/base/Player Pieces/${pieceType}.png`;
   };
 
   // Button handlers
