@@ -3,8 +3,6 @@ import ControlButtons from './ControlButtons';
 import PieceSelector from './PieceSelector';
 import { BOARD_LAYOUTS } from '../utils/boardLayouts';
 import { generatePuzzle } from '../utils/puzzleGenerator';
-
-// Import all tile images
 import emptyTile from '../assets/tiles/base/Game Board/MT_empty.png';
 import bottomMiddleSide from '../assets/tiles/base/Game Board/MT_bottom-middle-side.png';
 import rightMiddleSide from '../assets/tiles/base/Game Board/MT_right-middle-side.png';
@@ -20,6 +18,40 @@ import leftUpperCorner from '../assets/tiles/base/Game Board/MT_left-upper-corne
 import leftLowerCorner from '../assets/tiles/base/Game Board/MT_left-lower-corner.png';
 import rightUpperCorner from '../assets/tiles/base/Game Board/MT_right-upper-corner.png';
 import rightLowerCorner from '../assets/tiles/base/Game Board/MT_right-lower-corner.png';
+// Pre-placed pieces
+import sd1 from '../assets/tiles/base/Game Placed Pieces/SD1.png';
+import sd2 from '../assets/tiles/base/Game Placed Pieces/SD2.png';
+import sd3 from '../assets/tiles/base/Game Placed Pieces/SD3.png';
+import sd4 from '../assets/tiles/base/Game Placed Pieces/SD4.png';
+import sd5 from '../assets/tiles/base/Game Placed Pieces/SD5.png';
+import sd6 from '../assets/tiles/base/Game Placed Pieces/SD6.png';
+import sd7 from '../assets/tiles/base/Game Placed Pieces/SD7.png';
+import sd8 from '../assets/tiles/base/Game Placed Pieces/SD8.png';
+import sd9 from '../assets/tiles/base/Game Placed Pieces/SD9.png';
+// Player pieces
+import una from '../assets/tiles/base/Player Pieces/1-Una.png';
+import dux from '../assets/tiles/base/Player Pieces/2-Dux.png';
+import trey from '../assets/tiles/base/Player Pieces/3-Trey.png';
+import quacko from '../assets/tiles/base/Player Pieces/4-Quacko.png';
+import lima from '../assets/tiles/base/Player Pieces/5-Lima.png';
+import hex from '../assets/tiles/base/Player Pieces/6-Hex.png';
+import set from '../assets/tiles/base/Player Pieces/7-Set.png';
+import otto from '../assets/tiles/base/Player Pieces/8-Otto.png';
+import tisa from '../assets/tiles/base/Player Pieces/9-Tisa.png';
+// Numbers
+import number1 from '../assets/tiles/numbers/Number1.png';
+import number2 from '../assets/tiles/numbers/Number2.png';
+import number3 from '../assets/tiles/numbers/Number3.png';
+import number4 from '../assets/tiles/numbers/Number4.png';
+import number5 from '../assets/tiles/numbers/Number5.png';
+import number6 from '../assets/tiles/numbers/Number6.png';
+import number7 from '../assets/tiles/numbers/Number7.png';
+import number8 from '../assets/tiles/numbers/Number8.png';
+import number9 from '../assets/tiles/numbers/Number9.png';
+import InfoPopup from './InfoPopup';
+import HelpPopup from './HelpPopup';
+import HintPopup from './HintPopup';
+import RulerPopup from './RulerPopup';
 
 const tileImages = {
   'MT_empty.png': emptyTile,
@@ -241,15 +273,50 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
 
   const getPieceImagePath = (pieceType, isPrePlaced) => {
     if (stage === 3) {
-      return `/assets/tiles/numbers/${pieceType}.png`;
+      // Numbers
+      const numberImages = {
+        '1': number1,
+        '2': number2,
+        '3': number3,
+        '4': number4,
+        '5': number5,
+        '6': number6,
+        '7': number7,
+        '8': number8,
+        '9': number9
+      };
+      return numberImages[pieceType];
     }
     
     if (isPrePlaced) {
-      return `/assets/tiles/base/Game Placed Pieces/${pieceType}.png`;
+      // Pre-placed pieces
+      const prePlacedImages = {
+        'SD1': sd1,
+        'SD2': sd2,
+        'SD3': sd3,
+        'SD4': sd4,
+        'SD5': sd5,
+        'SD6': sd6,
+        'SD7': sd7,
+        'SD8': sd8,
+        'SD9': sd9
+      };
+      return prePlacedImages[pieceType];
     }
     
-    // For player pieces, use the full duck name
-    return `/assets/tiles/base/Player Pieces/${pieceType}.png`;
+    // Player pieces
+    const playerImages = {
+      '1-Una': una,
+      '2-Dux': dux,
+      '3-Trey': trey,
+      '4-Quacko': quacko,
+      '5-Lima': lima,
+      '6-Hex': hex,
+      '7-Set': set,
+      '8-Otto': otto,
+      '9-Tisa': tisa
+    };
+    return playerImages[pieceType];
   };
 
   // Button handlers
