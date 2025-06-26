@@ -1,4 +1,6 @@
 import React from 'react';
+import soundManager from '../utils/soundManager';
+import stage3Manager from '../utils/stage3Manager';
 
 // Import all UI images
 import duck1Active from '../assets/tiles/ui/Duck1-select_active.png';
@@ -19,6 +21,17 @@ import duck8Active from '../assets/tiles/ui/Duck8-select_active.png';
 import duck8Inactive from '../assets/tiles/ui/Duck8-select_inactive.png';
 import duck9Active from '../assets/tiles/ui/Duck9-select_active.png';
 import duck9Inactive from '../assets/tiles/ui/Duck9-select_inactive.png';
+
+// Import number images for Stage 3
+import number1 from '../assets/tiles/numbers/Number1.png';
+import number2 from '../assets/tiles/numbers/Number2.png';
+import number3 from '../assets/tiles/numbers/Number3.png';
+import number4 from '../assets/tiles/numbers/Number4.png';
+import number5 from '../assets/tiles/numbers/Number5.png';
+import number6 from '../assets/tiles/numbers/Number6.png';
+import number7 from '../assets/tiles/numbers/Number7.png';
+import number8 from '../assets/tiles/numbers/Number8.png';
+import number9 from '../assets/tiles/numbers/Number9.png';
 
 const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPieces = {}, prePlacedPieces = {}, highlightedButton }) => {
   // Duck matching system: maps each duck to its corresponding pre-placed piece
@@ -41,22 +54,27 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
 
   // Function to check if a piece type can be placed anywhere using duck matching logic
   const canPlacePiece = (pieceType) => {
-    // First check if we've already placed the maximum number of this duck type
+    // First check if we've already placed the maximum number of this piece type
     // Count both pre-placed pieces and player-placed pieces
     const maxPieces = gameType === '4x4' ? 4 : 9;
     
     // Count player-placed pieces of this type
     const playerPlacedCount = Object.values(placedPieces).filter(p => p.type === pieceType).length;
     
-    // Count pre-placed pieces that match this duck type
-    const matchingPrePlacedPiece = getMatchingPrePlacedPiece(pieceType);
+    // Count pre-placed pieces that match this piece type
+    let matchingPrePlacedPiece;
+    if (stage === 3) {
+      matchingPrePlacedPiece = stage3Manager.getPrePlacedPieceType(pieceType);
+    } else {
+      matchingPrePlacedPiece = getMatchingPrePlacedPiece(pieceType);
+    }
     const prePlacedCount = Object.values(prePlacedPieces).filter(p => p.type === matchingPrePlacedPiece).length;
     
-    // Total count of this duck type (both pre-placed and player-placed)
+    // Total count of this piece type (both pre-placed and player-placed)
     const totalCount = playerPlacedCount + prePlacedCount;
     
     if (totalCount >= maxPieces) {
-      return false; // Already placed maximum number of this duck type
+      return false; // Already placed maximum number of this piece type
     }
     
     const validCells = gameType === '4x4' ? 
@@ -79,10 +97,15 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
       // Check if this would violate duck matching rules
       let canPlace = true;
       
-      // Get the matching pre-placed piece for this duck
-      const matchingPrePlacedPiece = getMatchingPrePlacedPiece(pieceType);
+      // Get the matching pre-placed piece for this piece
+      let matchingPrePlacedPiece;
+      if (stage === 3) {
+        matchingPrePlacedPiece = stage3Manager.getPrePlacedPieceType(pieceType);
+      } else {
+        matchingPrePlacedPiece = getMatchingPrePlacedPiece(pieceType);
+      }
       if (!matchingPrePlacedPiece) {
-        continue; // Invalid duck type
+        continue; // Invalid piece type
       }
       
       // Check row - see if the matching pre-placed piece is in the same row
@@ -122,8 +145,55 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
 
   const getPieceImage = (pieceType, isSelected) => {
     if (stage === 3) {
-      // Stage 3 uses number pieces - use the correct path
-      return `/src/assets/tiles/numbers/${pieceType}.png`;
+      // Stage 3 uses mixed duck and number pieces
+      if (stage3Manager.isNumberPiece(pieceType)) {
+        // Use number images for number pieces
+        const numberImages = {
+          '1': number1,
+          '2': number2,
+          '3': number3,
+          '4': number4,
+          '5': number5,
+          '6': number6,
+          '7': number7,
+          '8': number8,
+          '9': number9
+        };
+        return numberImages[pieceType];
+      } else {
+        // Use duck images for duck pieces
+        const duckImages = {
+          '1': duck1Active,
+          '2': duck2Active,
+          '3': duck3Active,
+          '4': duck4Active,
+          '5': duck5Active,
+          '6': duck6Active,
+          '7': duck7Active,
+          '8': duck8Active,
+          '9': duck9Active
+        };
+        
+        const duckInactiveImages = {
+          '1': duck1Inactive,
+          '2': duck2Inactive,
+          '3': duck3Inactive,
+          '4': duck4Inactive,
+          '5': duck5Inactive,
+          '6': duck6Inactive,
+          '7': duck7Inactive,
+          '8': duck8Inactive,
+          '9': duck9Inactive
+        };
+        
+        // Check if we can place more of this piece type
+        const canPlace = canPlacePiece(pieceType);
+        
+        if (!canPlace) {
+          return duckInactiveImages[pieceType];
+        }
+        return duckImages[pieceType];
+      }
     } else {
       // Stages 1 and 2 use duck pieces
       const pieceImages = {
@@ -188,7 +258,22 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
 
   const getPieceExplanation = (pieceType) => {
     if (stage === 3) {
-      return `This button lets you pick up, and later place, the number ${pieceType}.`;
+      if (stage3Manager.isNumberPiece(pieceType)) {
+        return `This button lets you pick up, and later place, the number ${pieceType}.`;
+      } else {
+        const duckNames = {
+          '1': 'Una',
+          '2': 'Dux',
+          '3': 'Trey',
+          '4': 'Quacko',
+          '5': 'Lima',
+          '6': 'Hex',
+          '7': 'Set',
+          '8': 'Otto',
+          '9': 'Tisa'
+        };
+        return `This button lets you pick up, and later place, ${duckNames[pieceType]}.`;
+      }
     } else {
       const explanations = {
         '1-Una': 'This button lets you pick up, and later place, Una.',
@@ -205,7 +290,21 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
     }
   };
 
-  const pieces = gameType === '4x4' ? ['1-Una', '2-Dux', '3-Trey', '4-Quacko'] : ['1-Una', '2-Dux', '3-Trey', '4-Quacko', '5-Lima', '6-Hex', '7-Set', '8-Otto', '9-Tisa'];
+  // Get pieces based on stage and game type
+  const getPieces = () => {
+    if (stage === 3) {
+      // Stage 3 uses all 9 pieces (mixed ducks and numbers)
+      const pieces = stage3Manager.getAllPieces();
+      return pieces;
+    } else {
+      // Stages 1 and 2 use duck pieces
+      return gameType === '4x4' ? ['1-Una', '2-Dux', '3-Trey', '4-Quacko'] : ['1-Una', '2-Dux', '3-Trey', '4-Quacko', '5-Lima', '6-Hex', '7-Set', '8-Otto', '9-Tisa'];
+    }
+  };
+
+  const pieces = getPieces();
+  
+  console.log(`Rendering ${pieces.length} pieces for stage ${stage}:`, pieces);
 
   return (
     <div className="piece-selector">
@@ -218,8 +317,8 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
           <div key={piece} className="piece-container">
             <button
               onClick={() => {
-                console.log(`Piece ${piece} clicked`);
                 if (!isDisabled) {
+                  soundManager.playButtonClick();
                   onPieceSelect(piece === selectedPiece ? null : piece);
                 }
               }}

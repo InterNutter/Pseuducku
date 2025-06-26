@@ -3,6 +3,8 @@ import ControlButtons from './ControlButtons';
 import PieceSelector from './PieceSelector';
 import { BOARD_LAYOUTS } from '../utils/boardLayouts';
 import { generatePuzzle } from '../utils/puzzleGenerator';
+import soundManager from '../utils/soundManager';
+import stage3Manager from '../utils/stage3Manager';
 import emptyTile from '../assets/tiles/base/Game Board/MT_empty.png';
 import bottomMiddleSide from '../assets/tiles/base/Game Board/MT_bottom-middle-side.png';
 import rightMiddleSide from '../assets/tiles/base/Game Board/MT_right-middle-side.png';
@@ -48,6 +50,15 @@ import number6 from '../assets/tiles/numbers/Number6.png';
 import number7 from '../assets/tiles/numbers/Number7.png';
 import number8 from '../assets/tiles/numbers/Number8.png';
 import number9 from '../assets/tiles/numbers/Number9.png';
+import number1Placed from '../assets/tiles/numbers/Number1_placed_by_game.png';
+import number2Placed from '../assets/tiles/numbers/Number2_placed_by_game.png';
+import number3Placed from '../assets/tiles/numbers/Number3_placed_by_game.png';
+import number4Placed from '../assets/tiles/numbers/Number4_placed_by_game.png';
+import number5Placed from '../assets/tiles/numbers/Number5_placed_by_game.png';
+import number6Placed from '../assets/tiles/numbers/Number6_placed_by_game.png';
+import number7Placed from '../assets/tiles/numbers/Number7_placed_by_game.png';
+import number8Placed from '../assets/tiles/numbers/Number8_placed_by_game.png';
+import number9Placed from '../assets/tiles/numbers/Number9_placed_by_game.png';
 import InfoPopup from './InfoPopup';
 import HelpPopup from './HelpPopup';
 import HintPopup from './HintPopup';
@@ -96,17 +107,27 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
   const gridSize = BOARD_LAYOUTS[gameType].cols;
 
   // Duck matching system: maps each duck to its corresponding pre-placed piece
-  const duckMatching = {
-    '1-Una': 'SD1',
-    '2-Dux': 'SD2', 
-    '3-Trey': 'SD3',
-    '4-Quacko': 'SD4',
-    '5-Lima': 'SD5',
-    '6-Hex': 'SD6',
-    '7-Set': 'SD7',
-    '8-Otto': 'SD8',
-    '9-Tisa': 'SD9'
+  const getDuckMatching = () => {
+    if (stage === 3) {
+      // Stage 3 uses the Stage3Manager's duck matching system
+      return stage3Manager.getDuckMatching();
+    } else {
+      // Stages 1 and 2 use traditional duck matching
+      return {
+        '1-Una': 'SD1',
+        '2-Dux': 'SD2', 
+        '3-Trey': 'SD3',
+        '4-Quacko': 'SD4',
+        '5-Lima': 'SD5',
+        '6-Hex': 'SD6',
+        '7-Set': 'SD7',
+        '8-Otto': 'SD8',
+        '9-Tisa': 'SD9'
+      };
+    }
   };
+
+  const duckMatching = getDuckMatching();
 
   // Helper function to get the matching pre-placed piece for a duck
   const getMatchingPrePlacedPiece = (duckType) => {
@@ -178,19 +199,17 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
     }
   ];
 
-  // Generate a new puzzle when the component mounts or gameType changes
+  // Generate a new puzzle when the component mounts or gameType or stage changes
   useEffect(() => {
     if (gameType === '4x4' || gameType === '9x9') {
-      const { prePlacedPieces: newPrePlacedPieces } = generatePuzzle(gameType);
-      console.log('Setting pre-placed pieces:', newPrePlacedPieces);
-      console.log('Pre-placed pieces keys:', Object.keys(newPrePlacedPieces));
+      const { prePlacedPieces: newPrePlacedPieces } = generatePuzzle(gameType, stage);
       setPrePlacedPieces(newPrePlacedPieces);
       setPlacedPieces({});
       setMoveHistory([]);
       setCanUndo(false);
       setCanErase(false);
     }
-  }, [gameType]);
+  }, [gameType, stage]);
 
   // Update button states based on game state
   useEffect(() => {
@@ -200,6 +219,18 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
     setCanRuler(selectedPiece !== null && !eraserMode);
     setCanPrevious(currentPuzzleIndex > 0);
   }, [moveHistory.length, placedPieces, selectedPiece, eraserMode, currentPuzzleIndex]);
+
+  // Initialize sound manager
+  useEffect(() => {
+    soundManager.init();
+  }, []);
+
+  // Initialize Stage 3 if needed
+  useEffect(() => {
+    if (stage === 3) {
+      stage3Manager.initializeStage3(1); // Start with 1 number piece
+    }
+  }, [stage]);
 
   const handleCellClick = (rowIndex, colIndex) => {
     const cellKey = `${rowIndex}-${colIndex}`;
@@ -217,6 +248,7 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
       console.log('In eraser mode');
       if (placedPiece && !prePlacedPiece) {
         // Remove the placed piece
+        soundManager.playButtonClick();
         setPlacedPieces(prev => {
           const newPieces = { ...prev };
           delete newPieces[cellKey];
@@ -238,6 +270,7 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
     // Don't allow placing pieces on pre-placed pieces
     if (prePlacedPieces[cellKey]) {
       console.log('Cannot place on pre-placed piece');
+      soundManager.playInvalidPlacement();
       return;
     }
 
@@ -247,20 +280,31 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
     
     if (!canPlace) {
       console.log('Validation failed - not placing piece');
+      soundManager.playInvalidPlacement();
       return;
     }
 
     console.log('Placing piece:', selectedPiece, 'at:', cellKey);
-    setPlacedPieces(prev => ({
-      ...prev,
+    soundManager.playButtonClick();
+    
+    // Create new placed pieces state
+    const newPlacedPieces = {
+      ...placedPieces,
       [cellKey]: {
         type: selectedPiece,
         position: { row: rowIndex, col: colIndex }
       }
-    }));
+    };
+    
+    setPlacedPieces(newPlacedPieces);
     
     // Update move history
     setMoveHistory(prev => [...prev, { cellKey, pieceType: selectedPiece }]);
+    
+    // Check for completion after placing the piece
+    setTimeout(() => {
+      checkForCompletion(newPlacedPieces);
+    }, 100);
     
     // Only clear the selected piece if we've placed the maximum number of this type
     const maxPieces = gameType === '4x4' ? 4 : 9;
@@ -272,56 +316,257 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
     console.log('=== END CELL CLICK DEBUG ===');
   };
 
+  // Function to check for completion states
+  const checkForCompletion = (currentPlacedPieces) => {
+    const gameStart = 2;
+    const gameEnd = gameType === '4x4' ? 5 : 10;
+    const allPieces = { ...prePlacedPieces, ...currentPlacedPieces };
+    const previousAllPieces = { ...prePlacedPieces, ...placedPieces };
+    
+    // Check if puzzle is complete
+    const totalCells = (gameEnd - gameStart + 1) ** 2;
+    const filledCells = Object.keys(allPieces).length;
+    
+    if (filledCells === totalCells) {
+      // Check if the puzzle is solved correctly
+      if (isPuzzleSolved(allPieces)) {
+        soundManager.playPuzzleComplete();
+        console.log('Puzzle completed!');
+        return;
+      }
+    }
+    
+    // Check for NEWLY completed lines/columns/cells
+    let hasNewCompletion = false;
+    
+    // Check rows
+    for (let row = gameStart; row <= gameEnd; row++) {
+      const wasComplete = isLineComplete(row, 'row', previousAllPieces);
+      const isNowComplete = isLineComplete(row, 'row', allPieces);
+      if (!wasComplete && isNowComplete) {
+        hasNewCompletion = true;
+        console.log(`Row ${row} newly completed!`);
+      }
+    }
+    
+    // Check columns
+    for (let col = gameStart; col <= gameEnd; col++) {
+      const wasComplete = isLineComplete(col, 'column', previousAllPieces);
+      const isNowComplete = isLineComplete(col, 'column', allPieces);
+      if (!wasComplete && isNowComplete) {
+        hasNewCompletion = true;
+        console.log(`Column ${col} newly completed!`);
+      }
+    }
+    
+    // Check cells (boxes) - 2x2 for 4x4, 3x3 for 9x9
+    const cellSize = gameType === '4x4' ? 2 : 3;
+    for (let cellRow = 0; cellRow < cellSize; cellRow++) {
+      for (let cellCol = 0; cellCol < cellSize; cellCol++) {
+        const wasComplete = isCellComplete(cellRow, cellCol, cellSize, previousAllPieces);
+        const isNowComplete = isCellComplete(cellRow, cellCol, cellSize, allPieces);
+        if (!wasComplete && isNowComplete) {
+          hasNewCompletion = true;
+          console.log(`Cell (${cellRow}, ${cellCol}) newly completed!`);
+        }
+      }
+    }
+    
+    if (hasNewCompletion) {
+      soundManager.playLineComplete();
+    }
+  };
+
+  // Helper function to check if a line (row or column) is complete
+  const isLineComplete = (index, type, allPieces) => {
+    const gameStart = 2;
+    const gameEnd = gameType === '4x4' ? 5 : 10;
+    const pieces = new Set();
+    
+    for (let i = gameStart; i <= gameEnd; i++) {
+      const cellKey = type === 'row' ? `${index}-${i}` : `${i}-${index}`;
+      const piece = allPieces[cellKey];
+      if (piece) {
+        pieces.add(piece.type);
+      }
+    }
+    
+    return pieces.size === (gameEnd - gameStart + 1);
+  };
+
+  // Helper function to check if a cell (box) is complete
+  const isCellComplete = (cellRow, cellCol, cellSize, allPieces) => {
+    const gameStart = 2;
+    const pieces = new Set();
+    
+    for (let r = gameStart + cellRow * cellSize; r < gameStart + (cellRow + 1) * cellSize; r++) {
+      for (let c = gameStart + cellCol * cellSize; c < gameStart + (cellCol + 1) * cellSize; c++) {
+        const cellKey = `${r}-${c}`;
+        const piece = allPieces[cellKey];
+        if (piece) {
+          pieces.add(piece.type);
+        }
+      }
+    }
+    
+    return pieces.size === cellSize * cellSize;
+  };
+
+  // Helper function to check if the entire puzzle is solved
+  const isPuzzleSolved = (allPieces) => {
+    const gameStart = 2;
+    const gameEnd = gameType === '4x4' ? 5 : 10;
+    
+    // Check all rows
+    for (let row = gameStart; row <= gameEnd; row++) {
+      if (!isLineComplete(row, 'row', allPieces)) {
+        return false;
+      }
+    }
+    
+    // Check all columns
+    for (let col = gameStart; col <= gameEnd; col++) {
+      if (!isLineComplete(col, 'column', allPieces)) {
+        return false;
+      }
+    }
+    
+    // Check all cells
+    const cellSize = gameType === '4x4' ? 2 : 3;
+    for (let cellRow = 0; cellRow < cellSize; cellRow++) {
+      for (let cellCol = 0; cellCol < cellSize; cellCol++) {
+        if (!isCellComplete(cellRow, cellCol, cellSize, allPieces)) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  };
+
   const getPieceImagePath = (pieceType, isPrePlaced) => {
-    if (stage === 3) {
-      // Numbers
-      const numberImages = {
-        '1': number1,
-        '2': number2,
-        '3': number3,
-        '4': number4,
-        '5': number5,
-        '6': number6,
-        '7': number7,
-        '8': number8,
-        '9': number9
-      };
-      return numberImages[pieceType];
-    }
-    
-    if (isPrePlaced) {
-      // Pre-placed pieces
-      const prePlacedImages = {
-        'SD1': sd1,
-        'SD2': sd2,
-        'SD3': sd3,
-        'SD4': sd4,
-        'SD5': sd5,
-        'SD6': sd6,
-        'SD7': sd7,
-        'SD8': sd8,
-        'SD9': sd9
-      };
-      return prePlacedImages[pieceType];
-    }
-    
-    // Player pieces
-    const playerImages = {
-      '1-Una': una,
-      '2-Dux': dux,
-      '3-Trey': trey,
-      '4-Quacko': quacko,
-      '5-Lima': lima,
-      '6-Hex': hex,
-      '7-Set': set,
-      '8-Otto': otto,
-      '9-Tisa': tisa
+    // --- Number images ---
+    // These should be imported at the top of the file:
+    // import number1 from '../assets/tiles/numbers/Number1.png';
+    // import number1Placed from '../assets/tiles/numbers/Number1_placed_by_game.png';
+    // ... etc for 2-9
+    const numberImages = {
+      '1': number1,
+      '2': number2,
+      '3': number3,
+      '4': number4,
+      '5': number5,
+      '6': number6,
+      '7': number7,
+      '8': number8,
+      '9': number9
     };
-    return playerImages[pieceType];
+    const numberPlacedImages = {
+      '1': number1Placed,
+      '2': number2Placed,
+      '3': number3Placed,
+      '4': number4Placed,
+      '5': number5Placed,
+      '6': number6Placed,
+      '7': number7Placed,
+      '8': number8Placed,
+      '9': number9Placed
+    };
+
+    if (stage === 3) {
+      // Stage 3 uses mixed duck and number pieces
+      if (isPrePlaced) {
+        // Pre-placed pieces - check if it's a number or duck pre-placed piece
+        if (pieceType.startsWith('SD')) {
+          const number = pieceType.substring(2); // Extract number from SD1, SD2, etc.
+          if (stage3Manager.isNumberPiece(number)) {
+            // Use number pre-placed piece image
+            return numberPlacedImages[number];
+          } else {
+            // Use duck pre-placed piece image
+            const prePlacedImages = {
+              'SD1': sd1,
+              'SD2': sd2,
+              'SD3': sd3,
+              'SD4': sd4,
+              'SD5': sd5,
+              'SD6': sd6,
+              'SD7': sd7,
+              'SD8': sd8,
+              'SD9': sd9
+            };
+            return prePlacedImages[pieceType];
+          }
+        }
+        return pieceType; // Fallback
+      } else {
+        // Player pieces - check if it's a number or duck
+        if (stage3Manager.isNumberPiece(pieceType)) {
+          // Use number image
+          return numberImages[pieceType];
+        } else {
+          // Use duck image
+          const playerImages = {
+            '1': una,
+            '2': dux,
+            '3': trey,
+            '4': quacko,
+            '5': lima,
+            '6': hex,
+            '7': set,
+            '8': otto,
+            '9': tisa
+          };
+          return playerImages[pieceType];
+        }
+      }
+    } else {
+      // Stages 1 and 2 use traditional duck system
+      if (isPrePlaced) {
+        // Pre-placed pieces
+        if (pieceType.startsWith('SD')) {
+          const number = pieceType.substring(2);
+          // Stage 2: if this is a number, use the _placed_by_game image
+          if (stage === 3 && gameType === '9x9' && numberImages[number] && numberPlacedImages[number]) {
+            return numberPlacedImages[number];
+          }
+        }
+        const prePlacedImages = {
+          'SD1': sd1,
+          'SD2': sd2,
+          'SD3': sd3,
+          'SD4': sd4,
+          'SD5': sd5,
+          'SD6': sd6,
+          'SD7': sd7,
+          'SD8': sd8,
+          'SD9': sd9
+        };
+        return prePlacedImages[pieceType];
+      } else {
+        // Player pieces
+        if (stage === 3 && gameType === '9x9' && numberImages[pieceType]) {
+          return numberImages[pieceType];
+        }
+        const playerImages = {
+          '1-Una': una,
+          '2-Dux': dux,
+          '3-Trey': trey,
+          '4-Quacko': quacko,
+          '5-Lima': lima,
+          '6-Hex': hex,
+          '7-Set': set,
+          '8-Otto': otto,
+          '9-Tisa': tisa
+        };
+        return playerImages[pieceType];
+      }
+    }
   };
 
   // Button handlers
   const handleInfo = () => {
+    soundManager.playUIOpen();
     setShowInfo(!showInfo);
     setInfoStep(0);
     setShowHelp(false);
@@ -330,6 +575,7 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
   };
 
   const handleHelp = () => {
+    soundManager.playUIOpen();
     setShowHelp(!showHelp);
     setShowInfo(false);
     setShowHint(false);
@@ -338,6 +584,7 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
 
   const handleUndo = () => {
     if (moveHistory.length > 0) {
+      soundManager.playButtonClick();
       const lastMove = moveHistory[moveHistory.length - 1];
       setPlacedPieces(prev => {
         const newPieces = { ...prev };
@@ -350,6 +597,11 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
   };
 
   const handleErase = () => {
+    if (eraserMode) {
+      soundManager.playUIClose(); // Deactivating eraser mode
+    } else {
+      soundManager.playUIOpen(); // Activating eraser mode
+    }
     setEraserMode(!eraserMode);
     // Clear selected piece when entering eraser mode
     if (!eraserMode) {
@@ -359,6 +611,11 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
 
   const handleHint = () => {
     if (selectedPiece) {
+      if (hintMode) {
+        soundManager.playUIClose(); // Deactivating hint mode
+      } else {
+        soundManager.playUIOpen(); // Activating hint mode
+      }
       setHintMode(!hintMode);
       setShowHint(false);
       setShowInfo(false);
@@ -369,6 +626,11 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
 
   const handleRuler = () => {
     if (selectedPiece) {
+      if (rulerMode) {
+        soundManager.playUIClose(); // Deactivating ruler mode
+      } else {
+        soundManager.playUIOpen(); // Activating ruler mode
+      }
       setRulerMode(!rulerMode);
       setShowRuler(false);
       setShowInfo(false);
@@ -379,9 +641,10 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
 
   const handlePrevious = () => {
     if (currentPuzzleIndex > 0) {
+      soundManager.playNavigationClick();
       setCurrentPuzzleIndex(prev => prev - 1);
       // Generate new puzzle
-      const { prePlacedPieces: newPrePlacedPieces } = generatePuzzle(gameType);
+      const { prePlacedPieces: newPrePlacedPieces } = generatePuzzle(gameType, stage);
       setPrePlacedPieces(newPrePlacedPieces);
       setPlacedPieces({});
       setMoveHistory([]);
@@ -393,9 +656,10 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
   };
 
   const handleNext = () => {
+    soundManager.playNavigationClick();
     setCurrentPuzzleIndex(prev => prev + 1);
     // Generate new puzzle
-    const { prePlacedPieces: newPrePlacedPieces } = generatePuzzle(gameType);
+    const { prePlacedPieces: newPrePlacedPieces } = generatePuzzle(gameType, stage);
     setPrePlacedPieces(newPrePlacedPieces);
     setPlacedPieces({});
     setMoveHistory([]);
@@ -419,8 +683,14 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
   };
 
   const handleCloseInfo = () => {
+    soundManager.playUIClose();
     setShowInfo(false);
     setInfoStep(0);
+  };
+
+  const handleCloseHelp = () => {
+    soundManager.playUIClose();
+    setShowHelp(false);
   };
 
   // Helper function to check if a piece can be placed at a specific location
@@ -440,19 +710,24 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
       return false; // Outside the game grid
     }
     
-    // Get the matching pre-placed piece for this duck
-    const matchingPrePlacedPiece = getMatchingPrePlacedPiece(pieceType);
+    // Get the matching pre-placed piece for this piece
+    let matchingPrePlacedPiece;
+    if (stage === 3) {
+      matchingPrePlacedPiece = stage3Manager.getPrePlacedPieceType(pieceType);
+    } else {
+      matchingPrePlacedPiece = getMatchingPrePlacedPiece(pieceType);
+    }
     if (!matchingPrePlacedPiece) {
-      return false; // Invalid duck type
+      return false; // Invalid piece type
     }
     
     // Check if this would violate the duck matching rules
-    // A duck cannot be placed in the same row, column, or cell as its matching pre-placed piece
+    // A piece cannot be placed in the same row, column, or cell as its matching pre-placed piece
     
     // Check if this specific cell contains the matching pre-placed piece
     const currentCellPrePlaced = prePlacedPieces[cellKey];
     if (currentCellPrePlaced && currentCellPrePlaced.type === matchingPrePlacedPiece) {
-      return false; // Cannot place duck in the same cell as its matching pre-placed piece
+      return false; // Cannot place piece in the same cell as its matching pre-placed piece
     }
     
     // Check row - see if the matching pre-placed piece is in the same row
@@ -461,7 +736,7 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
       const prePlacedPiece = prePlacedPieces[checkCellKey];
       
       if (prePlacedPiece && prePlacedPiece.type === matchingPrePlacedPiece) {
-        return false; // Cannot place duck in same row as its matching pre-placed piece
+        return false; // Cannot place piece in same row as its matching pre-placed piece
       }
     }
     
@@ -471,7 +746,7 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
       const prePlacedPiece = prePlacedPieces[checkCellKey];
       
       if (prePlacedPiece && prePlacedPiece.type === matchingPrePlacedPiece) {
-        return false; // Cannot place duck in same column as its matching pre-placed piece
+        return false; // Cannot place piece in same column as its matching pre-placed piece
       }
     }
     
@@ -488,12 +763,12 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
         const prePlacedPiece = prePlacedPieces[checkCellKey];
         
         if (prePlacedPiece && prePlacedPiece.type === matchingPrePlacedPiece) {
-          return false; // Cannot place duck in same cell (box) as its matching pre-placed piece
+          return false; // Cannot place piece in same cell (box) as its matching pre-placed piece
         }
       }
     }
     
-    // Check if we haven't placed the maximum number of this duck type
+    // Check if we haven't placed the maximum number of this piece type
     const maxPieces = gameType === '4x4' ? 4 : 9;
     const pieceCount = Object.values(placedPieces).filter(p => p.type === pieceType).length;
     return pieceCount < maxPieces;
@@ -516,14 +791,19 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
       return false; // Outside the game grid
     }
     
-    // Get the matching pre-placed piece for this duck
-    const matchingPrePlacedPiece = getMatchingPrePlacedPiece(pieceType);
+    // Get the matching pre-placed piece for this piece
+    let matchingPrePlacedPiece;
+    if (stage === 3) {
+      matchingPrePlacedPiece = stage3Manager.getPrePlacedPieceType(pieceType);
+    } else {
+      matchingPrePlacedPiece = getMatchingPrePlacedPiece(pieceType);
+    }
     if (!matchingPrePlacedPiece) {
-      return false; // Invalid duck type
+      return false; // Invalid piece type
     }
     
     // Check if this cell would violate the duck matching rules
-    // A duck cannot be placed in the same row, column, or cell as its matching pre-placed piece
+    // A piece cannot be placed in the same row, column, or cell as its matching pre-placed piece
     
     // Check row - see if the matching pre-placed piece is in the same row
     for (let c = gameStart; c <= gameEnd; c++) {
@@ -552,20 +832,22 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
   const RulerLines = ({ selectedPiece, prePlacedPieces, placedPieces, gameType }) => {
     if (!selectedPiece) return null;
 
-    // Get the matching pre-placed piece for the selected duck
-    const getMatchingPrePlacedPiece = (duckType) => {
-      const duckNumber = duckType.split('-')[0];
-      return `SD${duckNumber}`;
-    };
+    // Get the matching pre-placed piece for the selected piece
+    let matchingPrePlacedPiece;
+    if (stage === 3) {
+      matchingPrePlacedPiece = stage3Manager.getPrePlacedPieceType(selectedPiece);
+    } else {
+      const duckNumber = selectedPiece.split('-')[0];
+      matchingPrePlacedPiece = `SD${duckNumber}`;
+    }
 
-    const matchingPrePlacedPiece = getMatchingPrePlacedPiece(selectedPiece);
     if (!matchingPrePlacedPiece) return null;
 
     const gameStart = 2;
     const gameEnd = gameType === '4x4' ? 5 : 10;
     const cellSize = gameType === '4x4' ? 2 : 3;
 
-    // Find all positions of the matching pre-placed piece and placed ducks of the same type
+    // Find all positions of the matching pre-placed piece and placed pieces of the same type
     const restrictedPositions = [];
     
     // Check pre-placed pieces
@@ -667,39 +949,44 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
       return false; // Outside the game grid
     }
     
-    // Get the matching pre-placed piece for this duck
-    const matchingPrePlacedPiece = getMatchingPrePlacedPiece(pieceType);
+    // Get the matching pre-placed piece for this piece
+    let matchingPrePlacedPiece;
+    if (stage === 3) {
+      matchingPrePlacedPiece = stage3Manager.getPrePlacedPieceType(pieceType);
+    } else {
+      matchingPrePlacedPiece = getMatchingPrePlacedPiece(pieceType);
+    }
     if (!matchingPrePlacedPiece) {
-      return false; // Invalid duck type
+      return false; // Invalid piece type
     }
     
-    // Check row - see if the matching pre-placed piece OR the same duck type is in the same row
+    // Check row - see if the matching pre-placed piece OR the same piece type is in the same row
     for (let c = gameStart; c <= gameEnd; c++) {
       const checkCellKey = `${rowIndex}-${c}`;
       const prePlacedPiece = prePlacedPieces[checkCellKey];
       const placedPiece = placedPieces[checkCellKey];
       
       if (prePlacedPiece && prePlacedPiece.type === matchingPrePlacedPiece) {
-        return false; // Cannot place duck in same row as its matching pre-placed piece
+        return false; // Cannot place piece in same row as its matching pre-placed piece
       }
       
       if (placedPiece && placedPiece.type === pieceType) {
-        return false; // Cannot place duck in same row as another duck of the same type
+        return false; // Cannot place piece in same row as another piece of the same type
       }
     }
     
-    // Check column - see if the matching pre-placed piece OR the same duck type is in the same column
+    // Check column - see if the matching pre-placed piece OR the same piece type is in the same column
     for (let r = gameStart; r <= gameEnd; r++) {
       const checkCellKey = `${r}-${colIndex}`;
       const prePlacedPiece = prePlacedPieces[checkCellKey];
       const placedPiece = placedPieces[checkCellKey];
       
       if (prePlacedPiece && prePlacedPiece.type === matchingPrePlacedPiece) {
-        return false; // Cannot place duck in same column as its matching pre-placed piece
+        return false; // Cannot place piece in same column as its matching pre-placed piece
       }
       
       if (placedPiece && placedPiece.type === pieceType) {
-        return false; // Cannot place duck in same column as another duck of the same type
+        return false; // Cannot place piece in same column as another piece of the same type
       }
     }
     
@@ -717,11 +1004,11 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
         const placedPiece = placedPieces[checkCellKey];
         
         if (prePlacedPiece && prePlacedPiece.type === matchingPrePlacedPiece) {
-          return false; // Cannot place duck in same cell (box) as its matching pre-placed piece
+          return false; // Cannot place piece in same cell (box) as its matching pre-placed piece
         }
         
         if (placedPiece && placedPiece.type === pieceType) {
-          return false; // Cannot place duck in same cell (box) as another duck of the same type
+          return false; // Cannot place piece in same cell (box) as another piece of the same type
         }
       }
     }
@@ -874,7 +1161,7 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
               <li>Pre-placed pieces cannot be moved or removed</li>
               <li>Use the hint and ruler buttons to help you solve the puzzle</li>
             </ul>
-            <button onClick={() => setShowHelp(false)}>Close</button>
+            <button onClick={handleCloseHelp}>Close</button>
           </div>
         </div>
       )}

@@ -98,7 +98,7 @@ const shuffleArray = (array) => {
 };
 
 // Function to generate a random puzzle for the game
-export const generatePuzzle = (gameType = '4x4') => {
+export const generatePuzzle = (gameType = '4x4', stage = 1) => {
   if (gameType === '4x4') {
     // For a solvable puzzle, we need to start with a complete valid solution
     // and then remove some pieces to create the puzzle
@@ -166,10 +166,22 @@ export const generatePuzzle = (gameType = '4x4') => {
       const solutionCol = col - 2;
       const pieceType = completeSolution[solutionRow][solutionCol];
       if (pieceType) {
-        prePlacedPieces[cellKey] = {
-          type: `SD${pieceType}`,
-          isPrePlaced: true
-        };
+        if (stage === 2) {
+          // Stage 2: Only duck pre-placed pieces (SD1-SD9)
+          // The pieceType is a number (1-9), but we want duck pieces
+          // So we use SD1-SD9 which are duck pre-placed pieces
+          prePlacedPieces[cellKey] = {
+            type: `SD${pieceType}`,
+            isPrePlaced: true
+          };
+        } else if (stage === 3) {
+          // Stage 3: Allow mixed (current logic)
+          // The Stage3Manager will determine if this should be a number or duck
+          prePlacedPieces[cellKey] = {
+            type: `SD${pieceType}`,
+            isPrePlaced: true
+          };
+        }
       }
     });
     
