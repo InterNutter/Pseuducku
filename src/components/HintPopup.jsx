@@ -1,61 +1,70 @@
 import React from 'react';
 
-const HintPopup = ({ onClose, selectedPiece, validPlacements = [] }) => {
+const HintPopup = ({ onClose, selectedPiece, validPlacements = [], gameType = '4x4' }) => {
+  const popupSize = gameType === '9x9' ? '450px' : '200px';
+  const contentSize = gameType === '9x9' ? '400px' : '180px';
+  const fontSize = gameType === '9x9' ? '16px' : '14px';
+  const padding = gameType === '9x9' ? '25px' : '15px';
+
   return (
     <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      position: 'absolute',
+      top: '100px',
+      left: '100px',
+      width: popupSize,
+      height: popupSize,
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      zIndex: 1000
+      zIndex: 1000,
+      borderRadius: '10px',
+      backdropFilter: 'blur(2px)'
     }}>
       <div style={{
         backgroundColor: 'white',
-        padding: '20px',
-        borderRadius: '10px',
-        maxWidth: '400px',
-        width: '90%',
-        textAlign: 'center'
+        padding: padding,
+        borderRadius: '8px',
+        maxWidth: contentSize,
+        maxHeight: contentSize,
+        textAlign: 'center',
+        fontSize: fontSize
       }}>
         {selectedPiece ? (
           <>
-            <h2 style={{ marginBottom: '15px' }}>Hint</h2>
+            <h2 style={{ marginBottom: gameType === '9x9' ? '15px' : '10px', fontSize: gameType === '9x9' ? '20px' : '16px' }}>Hint</h2>
             <p style={{ 
-              marginBottom: '20px', 
-              fontSize: '18px',
-              lineHeight: '1.5'
+              marginBottom: gameType === '9x9' ? '15px' : '10px', 
+              fontSize: gameType === '9x9' ? '16px' : '12px',
+              lineHeight: '1.4'
             }}>
               {validPlacements.length > 0 
-                ? `You can place this duck in ${validPlacements.length} valid spot${validPlacements.length === 1 ? '' : 's'}.`
-                : "This duck can't be placed anywhere valid right now."}
+                ? `${validPlacements.length} valid spot${validPlacements.length === 1 ? '' : 's'} available.`
+                : "No valid spots for this duck."}
             </p>
           </>
         ) : (
           <>
-            <h2 style={{ marginBottom: '15px' }}>Hint</h2>
+            <h2 style={{ marginBottom: gameType === '9x9' ? '15px' : '10px', fontSize: gameType === '9x9' ? '20px' : '16px' }}>Hint</h2>
             <p style={{ 
-              marginBottom: '20px', 
-              fontSize: '18px',
-              lineHeight: '1.5'
+              marginBottom: gameType === '9x9' ? '15px' : '10px', 
+              fontSize: gameType === '9x9' ? '16px' : '12px',
+              lineHeight: '1.4'
             }}>
-              Select a duck to place, please.
+              Select a duck first.
             </p>
           </>
         )}
         <button
           onClick={onClose}
           style={{
-            padding: '10px 20px',
+            padding: gameType === '9x9' ? '8px 16px' : '6px 12px',
             backgroundColor: '#4CAF50',
             color: 'white',
             border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: gameType === '9x9' ? '14px' : '11px'
           }}
         >
           Got it!

@@ -77,7 +77,7 @@ const ControlButtons = ({
       <button
         onClick={onHint}
         disabled={!canHint}
-        className={`control-button ${highlightedButton === 'hint' ? 'button-highlight' : ''} ${hintMode ? 'hint-active' : ''}`}
+        className={`control-button ${Array.isArray(highlightedButton) ? highlightedButton.includes('hint') ? 'button-highlight' : '' : highlightedButton === 'hint' ? 'button-highlight' : ''} ${hintMode ? 'hint-active' : ''}`}
       >
         <img
           src={hintButton}
@@ -87,7 +87,7 @@ const ControlButtons = ({
       <button
         onClick={onRuler}
         disabled={!canRuler}
-        className={`control-button ${highlightedButton === 'ruler' ? 'button-highlight' : ''} ${rulerMode ? 'ruler-active' : ''}`}
+        className={`control-button ${Array.isArray(highlightedButton) ? highlightedButton.includes('ruler') ? 'button-highlight' : '' : highlightedButton === 'ruler' ? 'button-highlight' : ''} ${rulerMode ? 'ruler-active' : ''}`}
       >
         <img
           src={canRuler ? rulerButton : rulerButtonDisabled}

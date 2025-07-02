@@ -310,20 +310,27 @@ const PieceSelector = ({ gameType, selectedPiece, onPieceSelect, stage, placedPi
     <div className="piece-selector">
       {pieces.map(piece => {
         const canPlace = canPlacePiece(piece);
-        const isDisabled = !canPlace;
-        const isHighlighted = highlightedButton === 'piece-selector';
+        const isHighlighted = highlightedButton === piece || highlightedButton === "piece-selector";
+        
+        // Debug logging for highlighted button
+        if (isHighlighted) {
+          console.log('Highlighted button:', piece, 'canPlace:', canPlace, 'isDisabled:', !canPlace);
+        }
         
         return (
           <div key={piece} className="piece-container">
             <button
               onClick={() => {
-                if (!isDisabled) {
+                console.log('Button clicked:', piece, 'isDisabled:', !canPlace);
+                if (canPlace) {
                   soundManager.playButtonClick();
                   onPieceSelect(piece === selectedPiece ? null : piece);
+                } else {
+                  console.log('Button is disabled, cannot select:', piece);
                 }
               }}
-              disabled={isDisabled}
-              className={`piece-button ${piece === selectedPiece ? 'selected' : ''} ${isDisabled ? 'disabled' : ''} ${isHighlighted ? 'button-highlight' : ''}`}
+              disabled={!canPlace}
+              className={`piece-button ${piece === selectedPiece ? 'selected' : ''} ${!canPlace ? 'disabled' : ''} ${isHighlighted ? 'button-highlight' : ''}`}
             >
               <img
                 src={getPieceImage(piece, piece === selectedPiece)}

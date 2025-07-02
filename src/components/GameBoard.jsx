@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ControlButtons from './ControlButtons';
 import PieceSelector from './PieceSelector';
+import MenuButton from './MenuButton';
+import MenuPopup from './MenuPopup';
 import { BOARD_LAYOUTS } from '../utils/boardLayouts';
 import { generatePuzzle } from '../utils/puzzleGenerator';
 import soundManager from '../utils/soundManager';
@@ -61,8 +63,6 @@ import number8Placed from '../assets/tiles/numbers/Number8_placed_by_game.png';
 import number9Placed from '../assets/tiles/numbers/Number9_placed_by_game.png';
 import InfoPopup from './InfoPopup';
 import HelpPopup from './HelpPopup';
-import HintPopup from './HintPopup';
-import RulerPopup from './RulerPopup';
 
 const tileImages = {
   'MT_empty.png': emptyTile,
@@ -82,7 +82,7 @@ const tileImages = {
   'MT_right-lower-corner.png': rightLowerCorner
 };
 
-const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
+const GameBoard = ({ gameType = '4x4', stage = 1, onStageChange }) => {
   const [selectedPiece, setSelectedPiece] = useState(null);
   const [placedPieces, setPlacedPieces] = useState({});
   const [prePlacedPieces, setPrePlacedPieces] = useState({});
@@ -98,10 +98,17 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
   const [showRuler, setShowRuler] = useState(false);
   const [moveHistory, setMoveHistory] = useState([]);
   const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(0);
-  const [infoStep, setInfoStep] = useState(0);
   const [eraserMode, setEraserMode] = useState(false);
   const [hintMode, setHintMode] = useState(false);
   const [rulerMode, setRulerMode] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isSoundMuted, setIsSoundMuted] = useState(false);
+  const [currentDifficulty, setCurrentDifficulty] = useState('medium');
+  const [showTutorialWIPPopup, setShowTutorialWIPPopup] = useState(false);
+  const [showAboutPopup, setShowAboutPopup] = useState(false);
+  const [showCreditsPopup, setShowCreditsPopup] = useState(false);
+  const [showSupportPopup, setShowSupportPopup] = useState(false);
+  const [highlightedInfoButton, setHighlightedInfoButton] = useState(null);
 
   const boardLayout = BOARD_LAYOUTS[gameType].layout;
   const gridSize = BOARD_LAYOUTS[gameType].cols;
@@ -144,60 +151,7 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
     return null;
   };
 
-  // Info steps for sequential popup - dynamic based on stage
-  const infoSteps = [
-    {
-      title: "Info Button",
-      description: "This button shows information about all the other buttons. You can click through each button's explanation or close when you're done.",
-      highlight: "info"
-    },
-    {
-      title: "Help Button", 
-      description: "This button shows the game instructions and rules. Click it to learn how to play the game.",
-      highlight: "help"
-    },
-    {
-      title: "Undo Button",
-      description: "This button undoes your last move. You can undo all the way back to the starting condition. It's not available when you haven't made any moves yet.",
-      highlight: "undo"
-    },
-    {
-      title: "Erase Button",
-      description: "This button removes your last placed piece. You cannot erase pre-placed pieces, and it's not available when you haven't placed any pieces yet.",
-      highlight: "erase"
-    },
-    {
-      title: "Hint Button",
-      description: stage === 3 
-        ? "This button shows where you can place your selected number. It highlights valid placement cells in green. Only works when you have a number selected."
-        : "This button shows where you can place your selected duck. It highlights valid placement cells in green. Only works when you have a duck selected.",
-      highlight: "hint"
-    },
-    {
-      title: "Ruler Button",
-      description: stage === 3
-        ? "This button shows lines where your selected number cannot be placed. It highlights restricted cells in red. Only works when you have a number selected."
-        : "This button shows lines where your selected duck cannot be placed. It highlights restricted cells in red. Only works when you have a duck selected.",
-      highlight: "ruler"
-    },
-    {
-      title: "Previous Button",
-      description: "This button lets you go to the previous puzzle in the series. It's not available when you're viewing the first puzzle.",
-      highlight: "previous"
-    },
-    {
-      title: "Next Button",
-      description: "This button lets you go to the next puzzle in the series. You can always move forward to the next puzzle.",
-      highlight: "next"
-    },
-    {
-      title: stage === 3 ? "Number Selection Buttons" : "Duck Selection Buttons",
-      description: stage === 3
-        ? "These buttons let you select which number you want to place on the board. Click a number button to pick it up, then click on an empty tile to place it. The buttons show active/inactive states based on whether you can place more of that number type."
-        : "These buttons let you select which duck you want to place on the board. Click a duck button to pick it up, then click on an empty tile to place it. The buttons show active/inactive states based on whether you can place more of that duck type.",
-      highlight: "piece-selector"
-    }
-  ];
+
 
   // Generate a new puzzle when the component mounts or gameType or stage changes
   useEffect(() => {
@@ -315,6 +269,33 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
     }
     console.log('=== END CELL CLICK DEBUG ===');
   };
+
+  // Helper to check if a row or cell was completed by the last move
+  function didCompleteRowOrCell(rowIndex, colIndex, allPieces) {
+    const gameStart = 2;
+    const gameEnd = gameType === '4x4' ? 5 : 10;
+    // Check row
+    let rowComplete = true;
+    for (let c = gameStart; c <= gameEnd; c++) {
+      if (!allPieces[`${rowIndex}-${c}`]) {
+        rowComplete = false;
+        break;
+      }
+    }
+    if (rowComplete) return true;
+    // Check cell (box)
+    const cellSize = gameType === '4x4' ? 2 : 3;
+    const cellRow = Math.floor((rowIndex - gameStart) / cellSize);
+    const cellCol = Math.floor((colIndex - gameStart) / cellSize);
+    for (let r = gameStart + cellRow * cellSize; r < gameStart + (cellRow + 1) * cellSize; r++) {
+      for (let c = gameStart + cellCol * cellSize; c < gameStart + (cellCol + 1) * cellSize; c++) {
+        if (!allPieces[`${r}-${c}`]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 
   // Function to check for completion states
   const checkForCompletion = (currentPlacedPieces) => {
@@ -568,7 +549,6 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
   const handleInfo = () => {
     soundManager.playUIOpen();
     setShowInfo(!showInfo);
-    setInfoStep(0);
     setShowHelp(false);
     setShowHint(false);
     setShowRuler(false);
@@ -670,27 +650,88 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
   };
 
   // Info navigation functions
-  const handleNextInfo = () => {
-    if (infoStep < infoSteps.length - 1) {
-      setInfoStep(infoStep + 1);
-    }
-  };
-
-  const handlePreviousInfo = () => {
-    if (infoStep > 0) {
-      setInfoStep(infoStep - 1);
-    }
-  };
-
   const handleCloseInfo = () => {
     soundManager.playUIClose();
     setShowInfo(false);
-    setInfoStep(0);
+    setHighlightedInfoButton(null);
+  };
+
+  const handleInfoStepChange = (buttonName) => {
+    console.log('GameBoard: Received highlight change:', buttonName);
+    setHighlightedInfoButton(buttonName);
   };
 
   const handleCloseHelp = () => {
     soundManager.playUIClose();
     setShowHelp(false);
+  };
+
+  const handleMenu = () => {
+    console.log('Menu button clicked! menuOpen:', menuOpen);
+    if (menuOpen) {
+      // Closing menu
+      console.log('Closing menu, playing UI_Quirky8');
+      soundManager.playUIClose();
+    } else {
+      // Opening menu
+      console.log('Opening menu, playing UI_Quirky7');
+      soundManager.playUIOpen();
+    }
+    setMenuOpen(!menuOpen);
+    console.log('New menuOpen state will be:', !menuOpen);
+  };
+
+  const handleCloseMenu = () => {
+    soundManager.playUIClose();
+    setMenuOpen(false);
+  };
+
+  const handleToggleSound = () => {
+    const isMuted = soundManager.toggleMute();
+    setIsSoundMuted(isMuted);
+    console.log('Sound toggled. Muted:', isMuted);
+    // Play a sound to confirm the toggle (if not muted)
+    if (!isMuted) {
+      soundManager.playButtonClick();
+    }
+  };
+
+  const handleSelectStage = (stageId) => {
+    console.log('Stage selected:', stageId);
+    onStageChange(stageId);
+  };
+
+  const handleSelectDifficulty = (difficultyId) => {
+    if (difficultyId === 'tutorial') {
+      setShowTutorialWIPPopup(true);
+      return;
+    }
+    setCurrentDifficulty(difficultyId);
+    // TODO: Generate puzzle for other difficulties
+  };
+
+  const handleAbout = () => {
+    setShowAboutPopup(true);
+  };
+
+  const handleCredits = () => {
+    setShowCreditsPopup(true);
+  };
+
+  const handleSupport = () => {
+    setShowSupportPopup(true);
+  };
+
+  const handleCloseAbout = () => {
+    setShowAboutPopup(false);
+  };
+
+  const handleCloseCredits = () => {
+    setShowCreditsPopup(false);
+  };
+
+  const handleCloseSupport = () => {
+    setShowSupportPopup(false);
   };
 
   // Helper function to check if a piece can be placed at a specific location
@@ -1016,10 +1057,19 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
     return true;
   };
 
+  // Custom handler for piece selection
+  const handlePieceSelect = (piece) => {
+    setSelectedPiece(piece);
+  };
+
+  console.log('GameBoard render - highlightedInfoButton:', highlightedInfoButton);
+  
   return (
-    <div className="game-container">
+    <div className={`game-container`}>
       <div className="game-board-container">
-        <div className="game-board">
+        {/* Menu Button - always visible */}
+        <MenuButton onClick={handleMenu} isOpen={menuOpen} />
+        <div className="game-board" data-game-type={gameType}>
           {boardLayout.map((row, rowIndex) => (
             row.map((cell, colIndex) => {
               const cellKey = `${rowIndex}-${colIndex}`;
@@ -1079,11 +1129,11 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
             <PieceSelector
               gameType={gameType}
               selectedPiece={selectedPiece}
-              onPieceSelect={setSelectedPiece}
+              onPieceSelect={handlePieceSelect}
               stage={stage}
               placedPieces={placedPieces}
               prePlacedPieces={prePlacedPieces}
-              highlightedButton={showInfo ? infoSteps[infoStep].highlight : null}
+              highlightedButton={highlightedInfoButton}
             />
           </div>
           <div className="ui-button-column">
@@ -1103,65 +1153,112 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
               canNavigate={true}
               hasPreviousPuzzle={canPrevious}
               hasNextPuzzle={canNext}
-              highlightedButton={showInfo ? infoSteps[infoStep].highlight : null}
+              highlightedButton={highlightedInfoButton}
               eraserMode={eraserMode}
               hintMode={hintMode}
               rulerMode={rulerMode}
             />
           </div>
+          
+          {/* Info Popup - positioned inside game board */}
+          {showInfo && (
+            <InfoPopup 
+              onClose={handleCloseInfo} 
+              gameType={gameType} 
+              stage={stage} 
+              onStepChange={handleInfoStepChange}
+            />
+          )}
+          
+          {/* Help Popup - positioned inside game board */}
+          {showHelp && (
+            <HelpPopup onClose={handleCloseHelp} gameType={gameType} />
+          )}
         </div>
+        
+        {/* Menu Popup */}
+        <MenuPopup
+          isOpen={menuOpen}
+          onClose={handleCloseMenu}
+          onToggleSound={handleToggleSound}
+          onSelectStage={handleSelectStage}
+          onSelectDifficulty={handleSelectDifficulty}
+          onAbout={handleAbout}
+          onCredits={handleCredits}
+          onSupport={handleSupport}
+          isSoundMuted={isSoundMuted}
+          currentStage={stage}
+          currentDifficulty={currentDifficulty}
+        />
       </div>
-      
-      {/* Info Popup */}
-      {showInfo && (
+      {/* Tutorial WIP Popup */}
+      {showTutorialWIPPopup && (
         <div className="info-popup">
           <div className="popup-content">
-            <h3>{infoSteps[infoStep].title}</h3>
+            <h3>Whoops!</h3>
             <div className="info-description">
-              {infoSteps[infoStep].description}
+              We're still working on this bit.
             </div>
-            <div className="info-navigation">
-              <button 
-                onClick={handlePreviousInfo}
-                disabled={infoStep === 0}
-                className="nav-button prev-button"
-              >
-                Previous
-              </button>
-              <span className="info-counter">
-                {infoStep + 1} of {infoSteps.length}
-              </span>
-              <button 
-                onClick={handleNextInfo}
-                disabled={infoStep === infoSteps.length - 1}
-                className="nav-button next-button"
-              >
-                Next
-              </button>
-            </div>
-            <button onClick={handleCloseInfo} className="close-button">
-              I'm Done
+            <button className="close-button" onClick={() => setShowTutorialWIPPopup(false)}>
+              OK
             </button>
           </div>
         </div>
       )}
-      
-      {/* Help Popup */}
-      {showHelp && (
-        <div className="help-popup">
+      {/* About Popup */}
+      {showAboutPopup && (
+        <div className="info-popup">
           <div className="popup-content">
-            <h3>How to Play</h3>
-            <p><strong>Objective:</strong> Place {stage === 3 ? 'numbers' : 'ducks'} on the board so that no two of the same type appear in the same row, column, or pen.</p>
-            <p><strong>Gameplay:</strong></p>
-            <ul>
-              <li>Click a {stage === 3 ? 'number' : 'duck'} button to select it</li>
-              <li>Click on an empty tile to place the selected {stage === 3 ? 'number' : 'duck'}</li>
-              <li>You cannot place the same {stage === 3 ? 'number' : 'duck'} type in the same row or column</li>
-              <li>You cannot place the same {stage === 3 ? 'number' : 'duck'} type in the same pen (the bordered areas on the board)</li>
-              <li>Pre-placed pieces cannot be moved or removed</li>
-              <li>Use the hint and ruler buttons to help you solve the puzzle</li>
-            </ul>
-            <button onClick={handleCloseHelp}>Close</button>
+            <h3>About Pseuducku</h3>
+            <div className="info-description">
+              <p><strong>Version:</strong> Beta 1.01</p>
+              <p><strong>Release Date:</strong> December 19, 2024</p>
+              <br />
+              <p>Pseuducku was created to teach an octogenarian technophobe to play Sudoku.</p>
+            </div>
+            <button className="close-button" onClick={handleCloseAbout}>
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Credits Popup */}
+      {showCreditsPopup && (
+        <div className="info-popup">
+          <div className="popup-content">
+            <h3>Credits</h3>
+            <div className="info-description">
+              <p><strong>UI sound effects</strong> by Eric Mayas</p>
+              <p><strong>Duck calls</strong> by C. M. Weller</p>
+              <p><strong>Art</strong> by C. M. Weller with the assistance of ProCreate and GIMP</p>
+              <p><strong>Programming</strong> by C. M. Weller with the assistance of Cursor</p>
+            </div>
+            <button className="close-button" onClick={handleCloseCredits}>
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Support Popup */}
+      {showSupportPopup && (
+        <div className="info-popup">
+          <div className="popup-content">
+            <h3>Support</h3>
+            <div className="info-description">
+              <p>You can support the maker of this program by...</p>
+              <br />
+              <p><strong>Subscribing to a tier on Patreon:</strong></p>
+              <p><a href="https://www.patreon.com/c/cmweller" target="_blank" rel="noopener noreferrer">https://www.patreon.com/c/cmweller</a></p>
+              <br />
+              <p><strong>Sending them a Ko-Fi:</strong></p>
+              <p><a href="https://ko-fi.com/cmweller" target="_blank" rel="noopener noreferrer">https://ko-fi.com/cmweller</a></p>
+              <br />
+              <p><strong>Or by bookmarking and visiting their hub site:</strong></p>
+              <p><a href="https://www.internutter.org" target="_blank" rel="noopener noreferrer">https://www.internutter.org</a></p>
+            </div>
+            <button className="close-button" onClick={handleCloseSupport}>
+              OK
+            </button>
           </div>
         </div>
       )}
@@ -1169,4 +1266,4 @@ const GameBoard = ({ gameType = '4x4', stage = 1 }) => {
   );
 };
 
-export default GameBoard; 
+export default GameBoard;
